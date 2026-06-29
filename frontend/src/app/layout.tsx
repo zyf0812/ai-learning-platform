@@ -32,7 +32,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="h-full flex flex-col" style={{ overflow: "hidden" }}>
+      <body className="h-full flex flex-col" style={{ overflow: "hidden" }} suppressHydrationWarning>
         <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
       </body>
     </html>
