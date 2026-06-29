@@ -97,6 +97,13 @@
             <version>5.2.5</version>
         </dependency>
 
+        <!-- API 文档 (Swagger) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
         <!-- Lombok + Jackson -->
         <dependency>
             <groupId>org.projectlombok</groupId>
