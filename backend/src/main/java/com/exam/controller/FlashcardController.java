@@ -1,5 +1,6 @@
 package com.exam.controller;
 
+import com.exam.dto.ReviewFlashcardRequest;
 import com.exam.service.FlashcardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,11 +19,9 @@ public class FlashcardController {
     }
 
     @PostMapping("/review")
-    public ResponseEntity<?> review(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> review(@RequestBody ReviewFlashcardRequest body) {
         try {
-            String cardId = (String) body.get("cardId");
-            int quality = ((Number) body.get("quality")).intValue();
-            return ResponseEntity.ok(service.review(cardId, quality));
+            return ResponseEntity.ok(service.review(body.getCardId(), body.getQuality()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

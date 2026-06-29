@@ -1,5 +1,7 @@
 package com.exam.controller;
 
+import com.exam.dto.GenerateExamRequest;
+import com.exam.dto.SubmitExamRequest;
 import com.exam.service.ExamService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -33,16 +35,9 @@ public class ExamController {
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<?> generate(@RequestBody Map<String, Object> body, Authentication auth) {
-        String title = (String) body.get("title");
-        List<String> docIds = (List<String>) body.get("documentIds");
-        List<String> types = (List<String>) body.get("types");
-        int count = ((Number) body.get("count")).intValue();
-        @SuppressWarnings("unchecked")
-        Map<String, Integer> typeCounts = body.containsKey("typeCounts") 
-            ? (Map<String, Integer>) body.get("typeCounts") : null;
-        boolean questionBankMode = body.getOrDefault("questionBankMode", false) instanceof Boolean b ? b : false;
-        var result = service.generateAsync(auth.getName(), title, docIds, types, count, typeCounts, questionBankMode);
+    public ResponseEntity<?> generate(@RequestBody GenerateExamRequest body, Authentication auth) {
+        var result = service.generateAsync(auth.getName(), body.getTitle(), body.getDocumentIds(),
+            body.getTypes(), body.getCount(), body.getTypeCounts(), body.isQuestionBankMode());
         return ResponseEntity.status(201).body(result);
     }
 
@@ -54,11 +49,9 @@ public class ExamController {
     }
 
     @PostMapping("/{id}/submit")
-    public ResponseEntity<?> submit(@PathVariable String id, @RequestBody Map<String, Object> body,
+    public ResponseEntity<?> submit(@PathVariable String id, @RequestBody SubmitExamRequest body,
                                      Authentication auth) {
-        @SuppressWarnings("unchecked")
-        Map<String, String> answers = (Map<String, String>) body.get("answers");
-        var result = service.submit(id, auth.getName(), answers);
+        var result = service.submit(id, auth.getName(), body.getAnswers());
         return ResponseEntity.ok(Map.of("attempt", result));
     }
 }

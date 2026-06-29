@@ -1,8 +1,8 @@
 package com.exam.controller;
 
+import com.exam.dto.UpdateWrongQuestionRequest;
 import com.exam.mapper.WrongQuestionMapper;
 import com.exam.mapper.QuestionMapper;
-import com.exam.model.Question;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +27,6 @@ public class WrongQuestionController {
             m.put("userAnswer", wq.getUserAnswer());
             m.put("mastered", wq.getMastered());
             m.put("reviewCount", wq.getReviewCount());
-            // 查题目内容
             var q = qMapper.findById(wq.getQuestionId());
             if (q != null) {
                 m.put("content", q.getContent());
@@ -41,8 +40,8 @@ public class WrongQuestionController {
     }
 
     @PatchMapping
-    public ResponseEntity<?> update(@RequestBody Map<String, Object> body) {
-        wqMapper.updateMastered((String) body.get("id"), (Boolean) body.get("mastered"));
+    public ResponseEntity<?> update(@RequestBody UpdateWrongQuestionRequest body) {
+        wqMapper.updateMastered(body.getId(), body.isMastered());
         return ResponseEntity.ok(Map.of("success", true));
     }
 }
