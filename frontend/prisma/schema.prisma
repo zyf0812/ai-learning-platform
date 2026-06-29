@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String           @id @default(cuid())
+  username       String           @unique
+  password       String
+  createdAt      DateTime         @default(now())
+  documents      Document[]
+  exams          Exam[]
+  attempts       ExamAttempt[]
+  conversations  Conversation[]
+  wrongQuestions WrongQuestion[]
+  studyStats     StudyStats[]
+}
+
+model Document {
+  id               String           @id @default(cuid())
+  title            String
+  originalFilename String
+  fileType         String
+  content          String
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  chunks           DocumentChunk[]
+  knowledgePoints  KnowledgePoint[]
+  examDocuments    ExamDocument[]
+  createdAt        DateTime         @default(now())
+}
+
+model DocumentChunk {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  content    String
+  embedding  Unsupported("vector(384)")
+  createdAt  DateTime @default(now())
+}
+
+model KnowledgePoint {
+  id         String      @id @default(cuid())
+  documentId String
+  document   Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  title      String
+  content    String
+  order      Int         @default(0)
+  flashCards FlashCard[]
+  createdAt  DateTime    @default(now())
+}
+
+model FlashCard {
+  id                String         @id @default(cuid())
+  knowledgePointId  String
+  knowledgePoint    KnowledgePoint @relation(fields: [knowledgePointId], references: [id], onDelete: Cascade)
+  front             String
+  back              String
+  easeFactor        Float          @default(2.5)
+  interval          Int            @default(0)
+  repetitions       Int            @default(0)
+  nextReview        DateTime       @default(now())
+  createdAt         DateTime       @default(now())
+}
+
+model Exam {
+  id            String         @id @default(cuid())
+  title         String
+  userId        String
+  user          User           @relation(fields: [userId], references: [id])
+  questionTypes String         @default("choice")
+  questionCount Int            @default(5)
+  documents     ExamDocument[]
+  questions     Question[]
+  attempts      ExamAttempt[]
+  createdAt     DateTime       @default(now())
+}
+
+model ExamDocument {
+  id         String   @id @default(cuid())
+  examId     String
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  type        String
+  content     String
+  options     String   @default("[]")
+  answer      String
+  explanation String   @default("")
+  createdAt   DateTime @default(now())
+}
+
+model ExamAttempt {
+  id          String    @id @default(cuid())
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  answers     String    @default("[]")
+  score       Int       @default(-1)
+  total       Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+model Conversation {
+  id         String        @id @default(cuid())
+  title      String
+  documentId String?
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  messages   ChatMessage[]
+  createdAt  DateTime      @default(now())
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model WrongQuestion {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  questionId  String
+  examId      String
+  userAnswer  String
+  reviewCount Int      @default(0)
+  mastered    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model StudyStats {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  documentId String
+  studyTime  Int      @default(0)
+  examCount  Int      @default(0)
+  avgScore   Float    @default(0)
+  updatedAt  DateTime @updatedAt
+}
