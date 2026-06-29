@@ -32,7 +32,7 @@ ${relevant.join("\n---\n")}
 
 历史对话：
 ${conversation.messages
-  .map((m) => `${m.role}: ${m.content}`)
+  .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
   .join("\n")}`;
 
   const resp = await client.chat.completions.create({

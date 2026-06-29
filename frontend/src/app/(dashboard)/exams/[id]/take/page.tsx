@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 export default function TakeExamPage() {
   const params = useParams(); const router = useRouter();
@@ -15,9 +17,7 @@ export default function TakeExamPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch(`/api/exams/${params.id}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json()).then(d => {
+    api.exams.get(params.id as string).then((d: any) => {
         setExam(d.exam);
         // 已提交过 → 跳结果页
         const hasResult = typeof window !== "undefined" && sessionStorage.getItem("examResult_" + d.exam.id);
@@ -26,19 +26,13 @@ export default function TakeExamPage() {
       .catch(() => router.push("/exams")).finally(() => setLoading(false));
   }, [params.id, router]);
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (!exam) return null;
 
   const submit = async () => {
     setSubmitting(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/exams/${exam.id}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ answers }),
-      });
-      const data = await res.json();
+      const data = await api.exams.submit(exam.id, answers) as any;
       if (data.error) throw new Error(data.error);
       // 把结果存 localStorage 给结果页用
       sessionStorage.setItem("examResult_" + exam.id, JSON.stringify(data.attempt));

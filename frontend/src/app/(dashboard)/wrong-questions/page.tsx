@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 const TYPE_LABELS: Record<string, string> = {
   choice: "选择题", fill: "填空题", truefalse: "判断题", shortanswer: "简答题",
@@ -14,25 +16,19 @@ export default function WrongQuestionsPage() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/wrong-questions", { headers: { Authorization: `Bearer ${token}` } });
-    setItems((await res.json()).wrongQuestions || []);
+    const res = await api.wrongQuestions.list() as any;
+    setItems(res.wrongQuestions || []);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
   const markMastered = async (id: string) => {
-    const token = localStorage.getItem("token");
-    await fetch("/api/wrong-questions", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ id, mastered: true }),
-    });
+    await api.wrongQuestions.update({ id, mastered: true });
     load();
   };
 
-  if (loading) return <p className="text-gray-400">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
 
   return (
     <div className="space-y-4">

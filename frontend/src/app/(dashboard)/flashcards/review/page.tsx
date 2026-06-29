@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 interface FlashCard {
   id: string;
@@ -22,12 +24,7 @@ export default function ReviewPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/flashcards", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    api.flashcards.list().then((d: any) => {
         if (d.cards.length === 0) setDone(true);
         setCards(d.cards);
         setLoading(false);
@@ -36,15 +33,7 @@ export default function ReviewPage() {
 
   const submit = async (quality: number) => {
     const card = cards[index];
-    const token = localStorage.getItem("token");
-    await fetch("/api/flashcards/review", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ cardId: card.id, quality }),
-    });
+    await api.flashcards.review({ cardId: card.id, quality });
 
     setFlipped(false);
     if (index + 1 < cards.length) {
@@ -54,7 +43,7 @@ export default function ReviewPage() {
     }
   };
 
-  if (loading) return <p className="text-gray-400">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (done) {
     return (
       <div className="max-w-lg mx-auto space-y-4 text-center">

@@ -68,9 +68,7 @@ export async function searchChunks(
   const embedding = await generateEmbedding(query);
   const vecStr = `[${embedding.join(",")}]`;
 
-  const rows = await prisma.$queryRawUnsafe<
-    { content: string }[]
-  >(
+  const rows = await prisma.$queryRawUnsafe<{ content: string }[]>(
     `SELECT content
      FROM "DocumentChunk"
      ORDER BY embedding <=> $1::vector
@@ -78,7 +76,7 @@ export async function searchChunks(
     [vecStr, topK]
   );
 
-  return rows.map((r) => r.content);
+  return rows.map((r: { content: string }) => r.content);
 }
 
 /** 在指定文档内向量搜索 */
@@ -90,9 +88,7 @@ export async function searchByDocumentId(
   const embedding = await generateEmbedding(query);
   const vecStr = `[${embedding.join(",")}]`;
 
-  const rows = await prisma.$queryRawUnsafe<
-    { content: string }[]
-  >(
+  const rows = await prisma.$queryRawUnsafe<{ content: string }[]>(
     `SELECT content
      FROM "DocumentChunk"
      WHERE "documentId" = $1
@@ -101,5 +97,5 @@ export async function searchByDocumentId(
     [documentId, vecStr, topK]
   );
 
-  return rows.map((r) => r.content);
+  return rows.map((r: { content: string }) => r.content);
 }

@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { api } from "@/lib/api";
 
 export default function ExamsPage() {
   const [exams, setExams] = useState<any[]>([]);
@@ -13,11 +15,8 @@ export default function ExamsPage() {
   const router = useRouter();
 
   const load = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/exams", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setExams((await res.json()).exams);
+    const res = await api.exams.list() as any;
+    setExams(res.exams);
     setLoading(false);
   }, []);
 
@@ -25,16 +24,12 @@ export default function ExamsPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/exams/${deleteTarget}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await api.exams.delete(deleteTarget);
     setDeleteTarget(null);
     load();
   };
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
 
   return (
     <div className="space-y-4">

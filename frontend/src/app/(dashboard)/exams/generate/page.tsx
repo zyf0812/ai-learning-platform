@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { api, request } from "@/lib/api";
 
 const QUESTION_TYPES = [
   { key: "choice", label: "选择题" },
@@ -24,12 +25,7 @@ export default function GenerateExamPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/documents", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setDocs(d.documents));
+    request("/api/documents").then((d: any) => setDocs(d.documents));
   }, []);
 
   const toggleDoc = (id: string) => {
@@ -55,24 +51,14 @@ export default function GenerateExamPage() {
     setGenerating(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
       const types = Object.keys(typeCounts);
       const count = Object.values(typeCounts).reduce((a, b) => a + b, 0);
-      const res = await fetch("/api/exams/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ title: title.trim(), documentIds: selectedDocs, types, count, typeCounts }),
-      });
-      const data = await res.json();
+      const data = await api.exams.generate({ title: title.trim(), documentIds: selectedDocs, types, count, typeCounts }) as any;
       if (data.error) throw new Error(data.error);
 
       const examId = data.exam.id;
       const poll = setInterval(async () => {
-        const sr = await fetch(`/api/exams/${examId}/status`, { headers: { Authorization: `Bearer ${token}` } });
-        const sd = await sr.json();
+        const sd = await api.exams.status(examId) as any;
         if (!sd.status) return;
         if (sd.status.startsWith("DONE:")) { clearInterval(poll); router.push(`/exams/${examId}`); }
         else if (sd.status.startsWith("FAILED:") || sd.status.startsWith("ERROR:")) { clearInterval(poll); setError(sd.status.split(":")[1] || "出题失败"); setGenerating(false); }

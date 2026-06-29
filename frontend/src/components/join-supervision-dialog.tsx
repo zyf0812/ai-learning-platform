@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
 
 export function JoinSupervisionDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [code, setCode] = useState("");
@@ -13,14 +14,12 @@ export function JoinSupervisionDialog({ open, onClose }: { open: boolean; onClos
   const join = async () => {
     if (!code.trim()) return;
     setLoading(true);
-    const token = localStorage.getItem("token");
-    const r = await fetch("/api/supervision/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ code: code.trim() }),
-    });
-    const d = await r.json();
-    setMsg(d.message || d.error);
+    try {
+      const d = await api.supervision.join(code.trim());
+      setMsg(d.message || d.error);
+    } catch (err: any) {
+      setMsg(err.message);
+    }
     setLoading(false);
   };
 

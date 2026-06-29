@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Doc {
   id: string;
@@ -30,7 +31,7 @@ export default function DocumentDetailPage() {
       .finally(() => setLoading(false));
   }, [params.id, router]);
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <Skeleton className="h-4 w-48" />;
   if (!doc) return null;
 
   return (

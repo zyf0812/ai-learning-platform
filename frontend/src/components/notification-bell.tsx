@@ -4,17 +4,15 @@ import { useState, useEffect } from "react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { api } from "@/lib/api";
 
 export function NotificationBell() {
   const [notifs, setNotifs] = useState<any[]>([]);
   const [unread, setUnread] = useState(0);
 
   const load = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
     try {
-      const r = await fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } });
-      const d = await r.json();
+      const d = await api.notifications.list();
       setNotifs(d.notifications || []);
       setUnread(d.unread || 0);
     } catch {}
@@ -23,8 +21,7 @@ export function NotificationBell() {
   useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, []);
 
   const markRead = async (id: string) => {
-    const token = localStorage.getItem("token");
-    await fetch(`/api/notifications/read/${id}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    await api.notifications.read(id);
     load();
   };
 

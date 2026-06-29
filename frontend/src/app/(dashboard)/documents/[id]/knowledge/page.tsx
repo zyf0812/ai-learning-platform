@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 interface KnowledgePoint {
   id: string;
@@ -24,12 +26,10 @@ export default function KnowledgePage() {
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`/api/documents/${params.id}/knowledge`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (data.points) setPoints(data.points);
+    try {
+      const data = await api.documents.knowledge.list(params.id as string);
+      if (data.points) setPoints(data.points);
+    } catch {}
     setLoading(false);
   }, [params.id]);
 
@@ -41,12 +41,7 @@ export default function KnowledgePage() {
     setGenerating(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`/api/documents/${params.id}/knowledge`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const data = await api.documents.knowledge.generate(params.id as string);
       if (data.error) throw new Error(data.error);
       setPoints(data.points);
     } catch (err: any) {
@@ -56,7 +51,7 @@ export default function KnowledgePage() {
     }
   };
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <Skeleton className="h-4 w-48" />;
 
   return (
     <div className="space-y-4">

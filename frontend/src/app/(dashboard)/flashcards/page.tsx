@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 interface Stats {
   total: number;
@@ -17,16 +19,10 @@ export default function FlashcardsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/flashcards", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setStats(d.stats))
-      .finally(() => setLoading(false));
+    api.flashcards.list().then((d: any) => setStats(d.stats)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-gray-400">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
 
   return (
     <div className="max-w-lg mx-auto space-y-6">

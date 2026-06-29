@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { api } from "@/lib/api";
 
 export default function GroupsPage() {
   const [groups, setGroups] = useState<any[]>([]);
@@ -19,12 +21,9 @@ export default function GroupsPage() {
   const [msg, setMsg] = useState("");
   const router = useRouter();
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-
   const load = async () => {
-    const r = await fetch("/api/groups", { headers });
-    setGroups((await r.json()).groups || []);
+    const r = await api.groups.list() as any;
+    setGroups(r.groups || []);
     setLoading(false);
   };
 
@@ -32,8 +31,7 @@ export default function GroupsPage() {
 
   const create = async () => {
     if (!name.trim()) return;
-    const r = await fetch("/api/groups", { method: "POST", headers, body: JSON.stringify({ name }) });
-    const d = await r.json();
+    const d = await api.groups.create(name) as any;
     if (d.error) { setMsg(d.error); return; }
     setCreateOpen(false); setName(""); setMsg("");
     load();
@@ -41,14 +39,13 @@ export default function GroupsPage() {
 
   const join = async () => {
     if (!code.trim()) return;
-    const r = await fetch("/api/groups/join", { method: "POST", headers, body: JSON.stringify({ code }) });
-    const d = await r.json();
+    const d = await api.groups.join(code) as any;
     if (d.error) { setMsg(d.error); return; }
     setJoinOpen(false); setCode(""); setMsg(d.message || "已申请");
     load();
   };
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
 
   return (
     <div className="space-y-4">

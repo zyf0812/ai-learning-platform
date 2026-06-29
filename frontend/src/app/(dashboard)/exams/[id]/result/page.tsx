@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -20,16 +22,13 @@ export default function ExamResultPage() {
 
   useEffect(() => {
     const examId = params.id as string;
-    const token = localStorage.getItem("token");
 
     // 从 sessionStorage 读提交结果
     const cached = sessionStorage.getItem("examResult_" + examId);
     const attempt = cached ? JSON.parse(cached) : null;
 
     // 同时获取考试详情
-    fetch(`/api/exams/${examId}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => {
+    api.exams.get(examId).then((d: any) => {
         setExam(d.exam);
         setResult({ attempt, exam: d.exam });
         setLoading(false);
@@ -37,7 +36,7 @@ export default function ExamResultPage() {
       .catch(() => { router.push("/exams"); setLoading(false); });
   }, [params.id, router]);
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (!result) return null;
 
   const { attempt } = result;

@@ -17,6 +17,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 interface Conv {
   id: string;
@@ -37,27 +39,18 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
   const activeId = params?.id as string;
 
   const load = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/conversations", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const text = await res.text();
-    try { setConvs(JSON.parse(text).conversations || []); } catch {}
+    try {
+      const data = await api.conversations.list();
+      setConvs(data.conversations || []);
+    } catch {}
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const create = async () => {
-    const token = localStorage.getItem("token");
-    const res = await fetch("/api/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ title: title.trim() || "新对话" }),
-    });
-    const text = await res.text();
     try {
-      const data = JSON.parse(text);
+      const data = await api.conversations.create({ title: title.trim() || "新对话" });
       if (!data.conversation?.id) return;
       setNewOpen(false);
       setTitle("");
@@ -68,11 +61,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    const token = localStorage.getItem("token");
-    await fetch(`/api/conversations/${deleteTarget}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await api.conversations.delete(deleteTarget);
     if (activeId === deleteTarget) router.push("/chat");
     setDeleteTarget(null);
     load();
@@ -94,7 +83,9 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <p className="p-4 text-sm text-muted-foreground">加载中...</p>
+            <div className="p-4 space-y-2">
+              {Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-12 w-full" />)}
+            </div>
           ) : convs.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">暂无对话</p>
           ) : (

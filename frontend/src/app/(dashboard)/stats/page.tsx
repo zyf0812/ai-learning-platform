@@ -1,17 +1,19 @@
 "use client";
 
 import { useState, useEffect, Suspense, lazy } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 const ReactECharts = lazy(() => import("echarts-for-react"));
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        {[1,2,3,4,5].map(i => <div key={i} className="h-20 bg-gray-100 dark:bg-gray-800 rounded-xl" />)}
+        {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20 w-full" />)}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {[1,2,3].map(i => <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 rounded-xl" />)}
+        {[1,2,3].map(i => <Skeleton key={i} className="h-64 w-full" />)}
       </div>
     </div>
   );
@@ -22,12 +24,11 @@ export default function StatsPage() {
   const [chartData, setChartData] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     Promise.all([
-      fetch("/api/stats", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/exams", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("/api/wrong-questions", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-    ]).then(([statsRes, examsRes, wqRes]) => {
+      api.stats.all(),
+      api.exams.list(),
+      api.wrongQuestions.list(),
+    ]).then(([statsRes, examsRes, wqRes]: any[]) => {
       const stats = statsRes.stats || {};
       const wqs = wqRes.wrongQuestions || [];
       const typeCount: Record<string, number> = {};

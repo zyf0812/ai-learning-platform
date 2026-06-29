@@ -8,14 +8,14 @@ export interface ThemeConfig {
   mode: "light" | "dark";
 }
 
-export const FONTS: Record<string, string> = {
+const FONTS: Record<string, string> = {
   default: "var(--font-geist-sans), system-ui, sans-serif",
   songti: "'Noto Serif SC', 'SimSun', serif",
   kaiti: "'ZCOOL KuaiLe', 'KaiTi', cursive",
   heiti: "'Noto Sans SC', 'Microsoft YaHei', sans-serif",
 };
 
-export const COLOR_PRESETS: Record<string, { light: Record<string, string>; dark: Record<string, string> }> = {
+const COLOR_PRESETS: Record<string, { light: Record<string, string>; dark: Record<string, string> }> = {
   blue:    { light: { primary: "#3b82f6" }, dark: { primary: "#60a5fa" } },
   green:   { light: { primary: "#059669" }, dark: { primary: "#34d399" } },
   teal:    { light: { primary: "#0d9488" }, dark: { primary: "#2dd4bf" } },

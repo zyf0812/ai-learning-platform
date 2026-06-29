@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 
 const TYPE_LABELS: Record<string, string> = {
   choice: "选择题", fill: "填空题", truefalse: "判断题", shortanswer: "简答题",
@@ -22,12 +24,11 @@ export default function ExamDetailPage() {
   const [hasAttempt, setHasAttempt] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
     const examId = params.id as string;
     Promise.all([
-      fetch(`/api/exams/${examId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`/api/attempts?examId=${examId}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()).catch(() => ({ attempts: [] }))
-    ]).then(([examData, attemptData]) => {
+      api.exams.get(examId),
+      api.attempts.list({ examId }).catch(() => ({ attempts: [] }))
+    ]).then(([examData, attemptData]: any[]) => {
         setExam(examData.exam);
         const hasResult = !!(typeof window !== "undefined" && sessionStorage.getItem("examResult_" + examId))
                        || (attemptData.attempts && attemptData.attempts.length > 0);
@@ -37,7 +38,7 @@ export default function ExamDetailPage() {
       .catch(() => router.push("/exams")).finally(() => setLoading(false));
   }, [params.id, router]);
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (!exam) return null;
 
   return (

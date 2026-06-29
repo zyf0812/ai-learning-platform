@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api, request } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -42,17 +44,9 @@ export default function ChatDetailPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : "";
-  const headers = { Authorization: `Bearer ${token}` };
-
-  // 初始加载：取最近 PAGE_SIZE 条
   const loadMessages = async (offset = 0) => {
-    const r = await fetch(`/api/conversations/${params.id}/messages?limit=${PAGE_SIZE}&offset=${offset}`, { headers });
-    if (!r.ok) return { messages: [], hasMore: false, total: 0 };
-    const text = await r.text();
     try {
-      const d = JSON.parse(text);
-      // 后端返回 ASC 顺序（最旧→最新），直接使用
+      const d = await api.conversations.messages(params.id as string, PAGE_SIZE, offset);
       const msgs = d.messages || [];
       if (offset === 0) {
         setMessages(msgs);
@@ -67,24 +61,18 @@ export default function ChatDetailPage() {
   };
 
   useEffect(() => {
-    fetch(`/api/conversations/${params.id}`, { headers })
-      .then(r => r.text())
-      .then(text => {
-        try {
-          const d = JSON.parse(text);
-          if (d.error) { router.push("/chat"); return; }
-          setConv(d.conversation);
-          loadMessages(0);
-        } catch {
-          router.push("/chat");
-        }
+    api.conversations.get(params.id as string)
+      .then(d => {
+        if (d.error) { router.push("/chat"); return; }
+        setConv(d.conversation);
+        loadMessages(0);
       })
       .catch(() => router.push("/chat"))
       .finally(() => setLoading(false));
 
-    fetch("/api/documents", { headers }).then(r => r.text()).then(t => {
-      try { setDocs(JSON.parse(t).documents || []); } catch {}
-    });
+    api.documents.list().then(d => {
+      setDocs(d.documents || []);
+    }).catch(() => {});
   }, [params.id]);
 
   // 新消息时滚到底部
@@ -115,11 +103,7 @@ export default function ChatDetailPage() {
     try {
       const body: any = { question: fullQuestion };
       if (attachDoc) body.docId = attachDoc.id;
-      const res = await fetch(`/api/conversations/${params.id}`, { method: "POST", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const text = await res.text();
-      let data;
-      try { data = JSON.parse(text); } catch { throw new Error("响应格式错误"); }
-      if (data.error) throw new Error(data.error);
+      const data = await request(`/api/conversations/${params.id}`, { method: "POST", body: JSON.stringify(body) });
       setAttachDoc(null);
       setMessages(prev => [...prev.slice(0, -1), { id: "real-a-" + Date.now(), role: "assistant", content: data.answer }]);
     } catch (err: any) {
@@ -129,10 +113,7 @@ export default function ChatDetailPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-        加载中...
-      </div>
+      <Skeleton className="h-8 w-32" />
     </div>
   );
   if (!conv) return null;

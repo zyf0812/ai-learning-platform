@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 import { ReactFlow, MiniMap, Controls, Background, type Node, type Edge } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -14,11 +16,7 @@ export default function MindmapPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch(`/api/documents/${params.id}/knowledge`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
+    api.documents.knowledge.list(params.id as string)
       .then((d) => {
         const points = d.points || [];
         if (points.length === 0) { setLoading(false); return; }
@@ -61,7 +59,7 @@ export default function MindmapPage() {
       });
   }, [params.id]);
 
-  if (loading) return <p className="text-muted-foreground">加载中...</p>;
+  if (loading) return <Skeleton className="h-4 w-48" />;
 
   return (
     <div className="space-y-4">
