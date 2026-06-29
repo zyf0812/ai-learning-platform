@@ -127,7 +127,8 @@ ai-learning-platform/
 │
 ├── docs/                         # 文档
 ├── README.md
-└── DEPLOY.md                     # 部署指南
+├── DEPLOY.md                     # 部署指南（Docker）
+└── DEPLOY_ONLINE.md              # 免费云部署指南（Railway）
 ```
 
 ## 快速开始
@@ -164,6 +165,10 @@ npm run dev
 ```
 
 访问 `http://localhost:3000`
+
+### 免费云部署
+
+参照 `DEPLOY_ONLINE.md`，使用 Railway 免费部署上线（无需信用卡）。
 
 ### Docker 部署
 
