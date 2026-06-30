@@ -30,6 +30,9 @@ Thumbs.db
 # Uploads
 backend/uploads/
 
+# pgvector source (PostgreSQL extension, not project code)
+pgvector-src/
+
 # Build
 dist/
 build/
