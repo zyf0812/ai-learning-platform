@@ -195,7 +195,13 @@ npm run dev
 
 ## 截图
 
-<!-- 后续补充项目截图 -->
+| 登录页 | 仪表盘 | AI 对话 |
+|:------:|:------:|:-------:|
+| ![登录页](screenshots/1-login.png) | ![仪表盘](screenshots/2-dashboard.png) | ![AI 对话](screenshots/3-chat.png) |
+
+| 文档管理 | 考试 | 闪卡 | 学习统计 |
+|:--------:|:----:|:----:|:--------:|
+| ![文档管理](screenshots/4-documents.png) | ![考试](screenshots/5-exams.png) | ![闪卡](screenshots/6-flashcards.png) | ![学习统计](screenshots/7-stats.png) |
 
 ## 路线图
 
