@@ -32,6 +32,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: "!function(){try{var e=JSON.parse(localStorage.getItem('theme-config'));e&&'dark'===e.mode&&document.documentElement.classList.add('dark')}catch(e){}}()"
+        }} />
+      </head>
       <body className="h-full flex flex-col" style={{ overflow: "hidden" }} suppressHydrationWarning>
         <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
       </body>

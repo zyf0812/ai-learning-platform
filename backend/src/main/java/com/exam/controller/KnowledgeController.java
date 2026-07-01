@@ -25,10 +25,8 @@ public class KnowledgeController {
     @PostMapping
     public ResponseEntity<?> extract(@PathVariable String id) {
         try {
-            var doc = docMapper.findById(id);
-            if (doc == null) return ResponseEntity.notFound().build();
             return ResponseEntity.status(201)
-                    .body(Map.of("points", service.extract(id, doc.getContent())));
+                    .body(Map.of("points", service.extract(id)));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

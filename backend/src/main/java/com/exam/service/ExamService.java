@@ -85,7 +85,9 @@ public class ExamService {
                     for (String docId : documentIds) {
                         var doc = docMapper.findById(docId);
                         if (doc != null && doc.getContent() != null) {
-                            allChunks.add(doc.getContent().substring(0, Math.min(doc.getContent().length(), 2000)));
+                            String structure = ragService.extractStructure(docId);
+                            String raw = doc.getContent().substring(0, Math.min(doc.getContent().length(), 12000));
+                            allChunks.add(structure.isEmpty() ? raw : structure + "\n\n" + raw);
                         }
                     }
                 }
@@ -104,11 +106,19 @@ public class ExamService {
                 }
                 
                 if (hasQuestionBank) {
-                    // 题库模式：严格按文档中的原题出题，仅生成解析
-                    String docContent = String.join("\n", allChunks);
+                    // 题库模式：取完整文档内容提取原题
+                    List<String> rawContents = new ArrayList<>();
+                    for (String docId : documentIds) {
+                        var doc = docMapper.findById(docId);
+                        if (doc != null && doc.getContent() != null) {
+                            rawContents.add(doc.getContent());
+                        }
+                    }
+                    String docContent = rawContents.isEmpty() ? String.join("\n", allChunks)
+                        : String.join("\n---\n", rawContents);
                     String bankPrompt = "请从以下文档中严格提取所有题目，完全保留原题内容和答案，不要修改。仅对每道题生成解析。\n" +
                         "返回JSON数组：[{\"type\":\"choice/fill/truefalse/shortanswer\",\"content\":\"原题内容\",\"options\":[\"A|原选项A\",\"B|原选项B\"],\"answer\":\"原答案\",\"explanation\":\"AI生成的解析\"}]\n" +
-                        "文档内容：\n" + docContent.substring(0, Math.min(docContent.length(), 15000));
+                        "文档内容：\n" + docContent.substring(0, Math.min(docContent.length(), 30000));
                     
                     String raw = deepSeek.chat("你是一个题库解析器。严格从文档中提取原题和原答案，不要修改题目内容。只对每道题补充解析。返回JSON数组。", bankPrompt);
                     raw = raw.trim().replaceAll("```[\\\\w]*\\\\n?", "").replaceAll("```", "");

@@ -1,7 +1,9 @@
 package com.exam.service;
 
 import com.exam.mapper.FlashCardMapper;
+import com.exam.mapper.KnowledgeMapper;
 import com.exam.model.FlashCard;
+import com.exam.model.KnowledgePoint;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,8 +12,9 @@ import java.util.*;
 @Service
 public class FlashcardService {
     private final FlashCardMapper mapper;
+    private final KnowledgeMapper knowledgeMapper;
 
-    public FlashcardService(FlashCardMapper m) { this.mapper = m; }
+    public FlashcardService(FlashCardMapper m, KnowledgeMapper km) { this.mapper = m; this.knowledgeMapper = km; }
 
     public Map<String, Object> getTodayCards(String userId) {
         List<FlashCard> cards = mapper.findDueCards(userId, 20);
@@ -43,5 +46,24 @@ public class FlashcardService {
         mapper.updateReview(card);
 
         return Map.of("easeFactor", ease, "interval", interval, "repetitions", reps);
+    }
+
+    public int generateForDocument(String documentId) {
+        List<KnowledgePoint> points = knowledgeMapper.findByDocumentId(documentId);
+        int count = 0;
+        for (KnowledgePoint p : points) {
+            FlashCard card = new FlashCard();
+            card.setId(UUID.randomUUID().toString().substring(0, 8));
+            card.setKnowledgePointId(p.getId());
+            card.setFront(p.getTitle());
+            card.setBack(p.getContent());
+            mapper.insert(card);
+            count++;
+        }
+        return count;
+    }
+
+    public void delete(String cardId) {
+        mapper.deleteById(cardId);
     }
 }

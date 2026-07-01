@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { Trash2 } from "lucide-react";
 
 interface FlashCard {
   id: string;
@@ -43,6 +44,19 @@ export default function ReviewPage() {
     }
   };
 
+  const handleDelete = async () => {
+    const card = cards[index];
+    await api.flashcards.delete(card.id);
+    const next = cards.filter((_, i) => i !== index);
+    setCards(next);
+    if (next.length === 0) {
+      setDone(true);
+    } else if (index >= next.length) {
+      setIndex(next.length - 1);
+    }
+    setFlipped(false);
+  };
+
   if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (done) {
     return (
@@ -77,6 +91,12 @@ export default function ReviewPage() {
       </Card>
 
       <p className="text-xs text-center text-gray-400">点击卡片翻转查看答案</p>
+
+      <div className="flex justify-center">
+        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-600" onClick={handleDelete}>
+          <Trash2 className="size-3.5 mr-1" />删除此卡
+        </Button>
+      </div>
 
       {flipped && (
         <div className="space-y-2">

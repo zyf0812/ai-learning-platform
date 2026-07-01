@@ -26,4 +26,16 @@ public class FlashcardController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PostMapping("/generate/{documentId}")
+    public ResponseEntity<?> generate(@PathVariable String documentId) {
+        int count = service.generateForDocument(documentId);
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
+    @DeleteMapping("/{cardId}")
+    public ResponseEntity<?> delete(@PathVariable String cardId) {
+        service.delete(cardId);
+        return ResponseEntity.ok(Map.of("success", true));
+    }
 }

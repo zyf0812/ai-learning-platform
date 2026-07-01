@@ -23,4 +23,7 @@ public interface FlashCardMapper {
 
     @Insert("INSERT INTO \"FlashCard\" (id, \"knowledgePointId\", front, back, \"createdAt\") VALUES (#{id}, #{knowledgePointId}, #{front}, #{back}, NOW())")
     void insert(FlashCard card);
+
+    @Delete("DELETE FROM \"FlashCard\" WHERE id = #{id}")
+    void deleteById(String id);
 }

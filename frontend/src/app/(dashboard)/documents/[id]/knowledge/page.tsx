@@ -22,8 +22,10 @@ export default function KnowledgePage() {
   const [points, setPoints] = useState<KnowledgePoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [genCards, setGenCards] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -51,6 +53,19 @@ export default function KnowledgePage() {
     }
   };
 
+  const handleGenCards = async () => {
+    setGenCards(true);
+    try {
+      await api.flashcards.generate(params.id as string);
+      setSuccess("闪卡生成成功！可前往「闪卡记忆」页面进行复习。");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err: any) {
+      setError(err.message || "生成失败");
+    } finally {
+      setGenCards(false);
+    }
+  };
+
   if (loading) return <Skeleton className="h-4 w-48" />;
 
   return (
@@ -70,6 +85,11 @@ export default function KnowledgePage() {
               {generating ? "AI 提取中..." : "AI 提取知识点"}
             </Button>
           )}
+          {points.length > 0 && (
+            <Button onClick={handleGenCards} disabled={genCards} variant="secondary">
+              {genCards ? "生成中..." : "生成闪卡"}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => router.back()}>
             返回
           </Button>
@@ -78,6 +98,12 @@ export default function KnowledgePage() {
 
       {error && (
         <Card className="p-4 text-red-500 text-sm">{error}</Card>
+      )}
+
+      {success && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm animate-in slide-in-from-top-2 fade-in">
+          ✅ {success}
+        </div>
       )}
 
       {generating && (

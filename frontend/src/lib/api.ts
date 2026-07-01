@@ -73,6 +73,10 @@ export const api = {
     list: () => request("/api/flashcards"),
     review: (body: { cardId: string; quality: number }) =>
       request("/api/flashcards/review", { method: "POST", body: JSON.stringify(body) }),
+    generate: (documentId: string) =>
+      request(`/api/flashcards/generate/${documentId}`, { method: "POST" }),
+    delete: (cardId: string) =>
+      request(`/api/flashcards/${cardId}`, { method: "DELETE" }),
   },
 
   wrongQuestions: {
