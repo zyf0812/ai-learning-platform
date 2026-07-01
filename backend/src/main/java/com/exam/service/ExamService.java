@@ -78,7 +78,7 @@ public class ExamService {
             try {
                 List<String> allChunks = new ArrayList<>();
                 for (String docId : documentIds) {
-                    List<String> chunks = ragService.searchByDocument(docId, "", 3);
+                    List<String> chunks = ragService.getChunksRandom(docId, 8);
                     allChunks.addAll(chunks);
                 }
                 if (allChunks.isEmpty()) {

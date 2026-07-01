@@ -53,19 +53,23 @@ public class ChatService {
 
         // 1. RAG 检索相关文档知识
         List<String> ragChunks = new ArrayList<>();
+        String docStructure = null;
         if (documentId != null && !documentId.isEmpty()) {
             try {
-                ragChunks = ragService.searchByDocument(documentId, question, 3);
+                ragChunks = ragService.searchByDocument(documentId, question, 20);
             } catch (Exception e) {
                 log.warn("RAG search failed: {}", e.getMessage());
             }
-            // 降级：直接取文档原文
-            if (ragChunks.isEmpty()) {
-                var doc = docMapper.findById(documentId);
-                if (doc != null && doc.getContent() != null) {
-                    ragChunks.add(doc.getContent().substring(0, Math.min(doc.getContent().length(), 2000)));
-                }
+            List<String> uniform = ragService.getChunksUniform(documentId, 3);
+            // 去重：均匀采样和向量搜索结果可能有重复，以向量搜索优先
+            Set<String> seen = new HashSet<>();
+            for (String c : ragChunks) seen.add(c.length() > 50 ? c.substring(0, 50) : c);
+            for (String c : uniform) {
+                String key = c.length() > 50 ? c.substring(0, 50) : c;
+                if (seen.add(key)) ragChunks.add(c);
             }
+            // 文档结构（仅几百字符的骨架信息，token 极少）
+            docStructure = ragService.extractStructure(documentId);
         }
 
         // 2. 历史过长时自动摘要压缩
@@ -78,10 +82,13 @@ public class ChatService {
 
         // 3. 构建完整上下文
         String context = contextManager.buildContext(history, ragChunks, summary);
+        if (docStructure != null && !docStructure.isEmpty()) {
+            context = "【文档结构概览】\n" + docStructure + "\n\n" + context;
+        }
 
         // 4. 发送给 DeepSeek
         String answer = deepSeek.chat(
-            "你是AI学习助手。基于提供的知识、对话历史和摘要回答用户问题。回答要专业、准确、有条理。",
+            "你是一个AI学习助手。回答基于用户上传的文档内容。文档被切分为片段提供，各片段可能不连续，请综合所有片段信息来回答。如果片段信息不足以回答，说明缺少相关信息。回答要专业、准确、有条理。",
             context + "\n\n用户: " + question
         );
 

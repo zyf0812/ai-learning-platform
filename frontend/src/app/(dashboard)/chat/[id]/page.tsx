@@ -47,7 +47,7 @@ export default function ChatDetailPage() {
   const loadMessages = async (offset = 0) => {
     try {
       const d = await api.conversations.messages(params.id as string, PAGE_SIZE, offset);
-      const msgs = d.messages || [];
+      const msgs = (d.messages || []).reverse();
       if (offset === 0) {
         setMessages(msgs);
       } else {
@@ -75,12 +75,10 @@ export default function ChatDetailPage() {
     }).catch(() => {});
   }, [params.id]);
 
-  // 新消息时滚到底部
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  // 滚动到顶部时加载更多
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el || !hasMore || loadingMore) return;
@@ -96,15 +94,13 @@ export default function ChatDetailPage() {
     setSending(true);
     const q = question.trim();
     setQuestion("");
-    const fullQuestion = attachDoc ? `[参考文档: ${attachDoc.title} (ID: ${attachDoc.id})]\n${q}` : q;
 
     setMessages(prev => [...prev, { id: "tmp-u-" + Date.now(), role: "user", content: q }, { id: "tmp-a-" + Date.now(), role: "assistant", content: "typing" }]);
 
     try {
-      const body: any = { question: fullQuestion };
-      if (attachDoc) body.docId = attachDoc.id;
+      const body: any = { question: q };
+      if (attachDoc) body.refDoc = attachDoc.id;
       const data = await request(`/api/conversations/${params.id}`, { method: "POST", body: JSON.stringify(body) });
-      setAttachDoc(null);
       setMessages(prev => [...prev.slice(0, -1), { id: "real-a-" + Date.now(), role: "assistant", content: data.answer }]);
     } catch (err: any) {
       setMessages(prev => [...prev.slice(0, -2), { id: "err-" + Date.now(), role: "assistant", content: `❌ ${err.message}` }]);
@@ -113,38 +109,42 @@ export default function ChatDetailPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <Skeleton className="h-8 w-32" />
+      <div className="flex flex-col items-center gap-3">
+        <Skeleton className="h-6 w-40 rounded-lg" />
+        <Skeleton className="h-3 w-24 rounded-full" />
+      </div>
     </div>
   );
   if (!conv) return null;
 
   return (
     <div className="flex flex-col h-full">
-      {/* 消息列表 - 可滚动 + 懒加载 */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-1 pb-4" ref={scrollRef} onScroll={handleScroll}>
-        <div className="max-w-3xl mx-auto space-y-6 py-4">
-          {/* 加载更多 */}
+      <div className="flex-1 overflow-y-auto min-h-0" ref={scrollRef} onScroll={handleScroll}>
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
           {loadingMore && (
-            <div className="text-center text-muted-foreground py-2">
-              <svg className="animate-spin w-4 h-4 mx-auto" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+            <div className="flex justify-center py-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                加载历史消息...
+              </div>
             </div>
           )}
           {hasMore && !loadingMore && (
-            <p className="text-center text-xs text-muted-foreground cursor-pointer hover:text-foreground" onClick={() => handleScroll()}>
-              向上滚动加载历史消息
-            </p>
+            <p className="text-center text-xs text-muted-foreground/60">向上滚动加载历史消息</p>
           )}
 
-          {/* 空状态 */}
           {messages.length === 0 && !loadingMore && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4 ring-1 ring-primary/10">
+                <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">开始对话</h3>
-              <p className="text-sm text-muted-foreground">向 AI 助手提问，获取基于文档知识的回答</p>
+              <h3 className="text-base font-semibold text-foreground mb-1">开始对话</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">向 AI 助手提问，获取基于文档知识的智能回答</p>
             </div>
           )}
 
@@ -154,38 +154,42 @@ export default function ChatDetailPage() {
             const showAvatar = idx === 0 || messages[idx - 1]?.role !== msg.role;
 
             return (
-              <div key={msg.id} className={`flex gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
-                <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-                  isUser ? "bg-blue-500 text-white" : "bg-gradient-to-br from-violet-400 to-purple-500 text-white"
+              <div key={msg.id} className={`flex gap-3 message-animate ${isUser ? "flex-row-reverse" : ""}`}>
+                <div className={`shrink-0 w-7 h-7 mt-1 rounded-full flex items-center justify-center text-[11px] font-medium transition-opacity ${
+                  isUser
+                    ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm"
+                    : "bg-gradient-to-br from-violet-400 to-purple-500 text-white shadow-sm"
                 } ${showAvatar ? "opacity-100" : "opacity-0"}`}>
-                  {isUser ? "你" : "AI"}
+                  {isUser ? "U" : "AI"}
                 </div>
 
-                <div className={`max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
+                <div className={`flex flex-col max-w-[80%] ${isUser ? "items-end" : "items-start"}`}>
                   {showAvatar && (
-                    <p className={`text-xs mb-1 px-1 ${isUser ? "text-right text-blue-500" : "text-violet-500"}`}>
+                    <span className={`text-[11px] mb-1 px-1 font-medium ${isUser ? "text-blue-500" : "text-violet-500"}`}>
                       {isUser ? "你" : "AI 助手"}
-                    </p>
+                    </span>
                   )}
-                  <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                    isUser ? "bg-blue-500 text-white rounded-tr-md" : "bg-card border rounded-tl-md shadow-sm"
+                  <div className={`px-4 py-2.5 text-sm leading-relaxed ${
+                    isUser
+                      ? "bg-blue-500 text-white rounded-2xl rounded-tr-md shadow-sm"
+                      : "bg-card border rounded-2xl rounded-tl-md shadow-sm"
                   }`}>
                     {isTyping ? (
-                      <div className="flex gap-1 py-1">
-                        <span className="w-2 h-2 bg-muted rounded-full animate-bounce" style={{animationDelay: "0ms"}} />
-                        <span className="w-2 h-2 bg-muted rounded-full animate-bounce" style={{animationDelay: "150ms"}} />
-                        <span className="w-2 h-2 bg-muted rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
+                      <div className="flex gap-1.5 py-1.5 px-1">
+                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay: "0ms"}} />
+                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay: "150ms"}} />
+                        <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
                       </div>
                     ) : (
-                      <div className={`prose prose-sm max-w-none break-words ${isUser ? "prose-invert" : "prose-gray"}`}>
+                      <div className={`markdown-body ${isUser ? "text-white [&_a]:text-white/80" : ""}`}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}
                           components={{
                             code({ className, children, ...props }: any) {
                               const isBlock = className?.startsWith("language-");
                               if (isBlock) {
-                                return <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 overflow-x-auto text-xs my-2"><code className={className} {...props}>{children}</code></pre>;
+                                return <pre className="bg-[#1e1e2e] text-[#cdd6f4] rounded-lg p-4 overflow-x-auto text-sm my-3 border border-white/5"><code className={className} {...props}>{children}</code></pre>;
                               }
-                              return <code className="bg-muted text-rose-600 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
+                              return <code className="bg-muted text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
                             },
                             pre({ children }) { return <>{children}</>; }
                           }}
@@ -197,23 +201,34 @@ export default function ChatDetailPage() {
               </div>
             );
           })}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} className="h-2" />
         </div>
       </div>
 
-      {/* 输入区 */}
-      <div className="border-t bg-card/80 backdrop-blur-sm pt-3 pb-1 px-1">
+      <div className="border-t bg-background/95 backdrop-blur-sm px-4 pt-3 pb-3">
         <div className="max-w-3xl mx-auto">
-          {/* 文档引用 */}
           {docs.length > 0 && (
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="text-xs text-muted-foreground shrink-0">引用文档：</span>
+            <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+              <span className="text-xs text-muted-foreground/60 mr-0.5">引用：</span>
               {attachDoc ? (
-                <Badge className="cursor-pointer bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 text-xs" onClick={() => setAttachDoc(null)}>📎 {attachDoc.title} ✕</Badge>
+                <Badge
+                  className="cursor-pointer bg-primary/10 text-primary hover:bg-primary/15 text-xs gap-1 px-2.5 py-0.5 rounded-full"
+                  onClick={() => setAttachDoc(null)}
+                >
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  {attachDoc.title}
+                  <svg className="w-3 h-3 ml-0.5 opacity-60 hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12" /></svg>
+                </Badge>
               ) : (
                 docs.map(doc => (
-                  <Badge key={doc.id} variant="outline" className="cursor-pointer hover:bg-muted text-xs" onClick={() => setAttachDoc(doc)}>
-                    {doc.fileType === "pdf" ? "📕" : doc.fileType === "pptx" ? "📊" : "📄"} {doc.title}
+                  <Badge
+                    key={doc.id}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-muted/80 text-xs gap-1 px-2.5 py-0.5 rounded-full transition-colors"
+                    onClick={() => setAttachDoc(doc)}
+                  >
+                    {doc.fileType === "pdf" ? "📕" : doc.fileType === "pptx" ? "📊" : "📄"}
+                    {doc.title}
                   </Badge>
                 ))
               )}
@@ -227,16 +242,29 @@ export default function ChatDetailPage() {
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
                 disabled={sending}
-                className="pr-10 h-10 rounded-xl border-gray-200 dark:border-gray-700 focus:border-blue-300"
+                className="h-11 rounded-xl bg-muted/50 border-muted focus-visible:bg-card transition-colors pr-12"
               />
+              {question.trim() && !sending && (
+                <Button
+                  size="sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 rounded-lg p-0 bg-blue-500 hover:bg-blue-600 shadow-sm"
+                  onClick={send}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                  </svg>
+                </Button>
+              )}
             </div>
-            <Button onClick={send} disabled={sending || !question.trim()} size="sm" className="h-10 w-10 rounded-xl p-0 bg-blue-500 hover:bg-blue-600">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-              </svg>
-            </Button>
+            {!question.trim() && (
+              <Button onClick={send} disabled={sending} size="sm" className="h-11 w-11 rounded-xl p-0 bg-blue-500 hover:bg-blue-600 shadow-sm shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              </Button>
+            )}
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-2">AI 基于上传的文档知识回答 · 请核实重要信息</p>
+          <p className="text-center text-xs text-muted-foreground/40 mt-2">AI 基于文档知识回答 · 请核实重要信息</p>
         </div>
       </div>
     </div>

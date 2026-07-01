@@ -15,13 +15,13 @@ public interface ChatMapper {
     @Insert("INSERT INTO \"Conversation\" (id, title, \"userId\", \"createdAt\") VALUES (#{id}, #{title}, #{userId}, NOW())")
     void insertConv(Conversation c);
 
-    @Select("SELECT * FROM \"ChatMessage\" WHERE \"conversationId\" = #{convId} ORDER BY \"createdAt\" ASC LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT * FROM \"ChatMessage\" WHERE \"conversationId\" = #{convId} ORDER BY \"createdAt\" DESC LIMIT #{limit} OFFSET #{offset}")
     List<ChatMessage> findMessagesPaged(@Param("convId") String convId, @Param("limit") int limit, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM \"ChatMessage\" WHERE \"conversationId\" = #{convId}")
     int countMessages(String convId);
 
-    @Select("SELECT * FROM \"ChatMessage\" WHERE \"conversationId\" = #{convId} ORDER BY \"createdAt\"")
+    @Select("SELECT * FROM \"ChatMessage\" WHERE \"conversationId\" = #{convId} ORDER BY \"createdAt\" DESC")
     List<ChatMessage> findMessages(String convId);
 
     @Insert("INSERT INTO \"ChatMessage\" (id, \"conversationId\", role, content, \"createdAt\") VALUES (#{id}, #{conversationId}, #{role}, #{content}, NOW())")

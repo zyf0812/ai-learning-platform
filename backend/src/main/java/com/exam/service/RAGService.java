@@ -39,14 +39,48 @@ public class RAGService {
     }
 
     public List<String> chunk(String content, int chunkSize, int overlap) {
+        String[] paragraphs = content.split("\n\n+");
         List<String> chunks = new ArrayList<>();
-        int start = 0;
-        while (start < content.length()) {
-            int end = Math.min(start + chunkSize, content.length());
-            String chunk = content.substring(start, end).trim();
-            if (chunk.length() > 10) chunks.add(chunk);
-            start += (chunkSize - overlap);
+        StringBuilder current = new StringBuilder();
+
+        for (String para : paragraphs) {
+            para = para.trim();
+            if (para.isEmpty()) continue;
+
+            // 超长段落按句子切分
+            if (para.length() > chunkSize) {
+                if (!current.isEmpty()) { chunks.add(current.toString().trim()); current = new StringBuilder(); }
+                for (String s : para.split("(?<=[。！？.!?])\\s*")) {
+                    if (current.length() + s.length() > chunkSize && !current.isEmpty()) {
+                        chunks.add(current.toString().trim()); current = new StringBuilder();
+                    }
+                    current.append(s);
+                }
+                continue;
+            }
+
+            if (!current.isEmpty() && current.length() + para.length() > chunkSize) {
+                chunks.add(current.toString().trim()); current = new StringBuilder();
+            }
+            current.append(para).append("\n\n");
         }
+        if (!current.isEmpty()) chunks.add(current.toString().trim());
+
+        // 加入 overlap：每个块尾部追加下一块开头的一小段，保持上下文连贯
+        if (overlap > 0 && chunks.size() > 1) {
+            List<String> overlapped = new ArrayList<>();
+            for (int i = 0; i < chunks.size(); i++) {
+                String chunk = chunks.get(i);
+                if (i < chunks.size() - 1) {
+                    String next = chunks.get(i + 1);
+                    int take = Math.min(overlap, next.length());
+                    chunk += "\n\n" + next.substring(0, take);
+                }
+                overlapped.add(chunk);
+            }
+            return overlapped;
+        }
+
         return chunks;
     }
 
@@ -80,7 +114,7 @@ public class RAGService {
 
     /** 索引文档到 pgvector */
     public int indexDocument(String documentId, String content) {
-        List<String> chunks = chunk(content, 512, 64);
+        List<String> chunks = chunk(content, 1024, 128);
         chunkMapper.deleteByDocumentId(documentId);
         int indexed = 0;
         for (int i = 0; i < chunks.size(); i++) {
@@ -104,6 +138,60 @@ public class RAGService {
             return chunkMapper.searchByDocument(documentId, toVectorString(vec), topK);
         } catch (Exception e) {
             return List.of();
+        }
+    }
+
+    /** 按文档顺序获取片段（用于出题等需均匀覆盖的场景） */
+    public List<String> getChunksByIndex(String documentId, int limit) {
+        try {
+            return chunkMapper.getChunksByIndex(documentId, limit);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /** 均匀采样文档片段（用于全文概览类问题） */
+    public List<String> getChunksUniform(String documentId, int step) {
+        try {
+            return chunkMapper.getChunksUniform(documentId, step);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /** 随机取文档片段（用于出题，每次不同知识点） */
+    List<String> getChunksRandom(String documentId, int limit) {
+        try {
+            return chunkMapper.getChunksRandom(documentId, limit);
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    /** 提取文档结构：开头介绍 + 标题/小标题列表（仅几百字符，token 极少） */
+    public String extractStructure(String documentId) {
+        try {
+            List<String> all = chunkMapper.getAllChunks(documentId);
+            if (all.isEmpty()) return "";
+            StringBuilder sb = new StringBuilder();
+            // 开头：取第一个块的前 500 字符
+            String first = all.get(0).trim();
+            sb.append("【文档开头】\n").append(first.length() > 500 ? first.substring(0, 500) : first).append("\n\n");
+            // 标题：找短块（< 200 字符且不含换行，像章节标题）
+            List<String> headings = new ArrayList<>();
+            for (String c : all) {
+                String t = c.trim();
+                if (t.length() > 10 && t.length() < 200 && !t.contains("\n")) {
+                    headings.add(t);
+                }
+            }
+            if (!headings.isEmpty()) {
+                sb.append("【章节标题】\n");
+                for (String h : headings) sb.append("· ").append(h).append("\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
         }
     }
 

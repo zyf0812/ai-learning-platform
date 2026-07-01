@@ -16,8 +16,8 @@ import java.util.*;
  */
 public class ContextManager {
 
-    private static final int RECENT_COUNT = 20;      // 保留最近 N 条原文
-    private static final int MAX_TOKENS = 8000;       // 总 token 预算
+    private static final int RECENT_COUNT = 10;      // 保留最近 N 条原文
+    private static final int MAX_TOKENS = 50000;       // 总 token 预算
 
     /**
      * 构建上下文
@@ -43,14 +43,17 @@ public class ContextManager {
             ctx.append("【对话背景】\n").append(summary).append("\n\n");
         }
 
-        // 3. 最近对话
+        // 3. 最近对话（history 已是 DESC，前 N 条就是最近的）
         if (history != null && !history.isEmpty()) {
             List<ChatMessage> recent = history;
             if (history.size() > RECENT_COUNT) {
-                recent = history.subList(history.size() - RECENT_COUNT, history.size());
+                recent = history.subList(0, RECENT_COUNT);
             }
             ctx.append("【最近对话】\n");
-            for (ChatMessage m : recent) {
+            // 反转成 ASC 顺序展示
+            List<ChatMessage> ordered = new ArrayList<>(recent);
+            java.util.Collections.reverse(ordered);
+            for (ChatMessage m : ordered) {
                 ctx.append(m.getRole()).append(": ").append(m.getContent()).append("\n");
             }
         }
@@ -60,13 +63,13 @@ public class ContextManager {
 
     /** 需要摘要的条件：消息超过阈值 */
     public boolean needsSummary(List<ChatMessage> history) {
-        return history != null && history.size() > RECENT_COUNT + 10;
+        return history != null && history.size() > RECENT_COUNT + 5;
     }
 
-    /** 获取需要摘要的部分（超出最近 N 条的旧消息） */
+    /** 获取需要摘要的部分（超出最近 N 条的旧消息，history 为 DESC） */
     public List<ChatMessage> getOldMessages(List<ChatMessage> history) {
         if (history == null || history.size() <= RECENT_COUNT) return List.of();
-        return history.subList(0, history.size() - RECENT_COUNT);
+        return history.subList(RECENT_COUNT, history.size());
     }
 
     /** 简单的 token 估算：中文约每字 1 token，英文约每词 1 token */
