@@ -15,6 +15,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
@@ -76,5 +77,29 @@ class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(Map.of("username", "testuser", "password", "wrongpass"))))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.error").value("用户名或密码错误"));
+    }
+
+    @Test
+    void meReturnsUserInfo() throws Exception {
+        when(authService.me("user123"))
+            .thenReturn(Map.of("id", "user123", "username", "testuser", "role", "user"));
+
+        mockMvc.perform(get("/api/auth/me")
+                .principal(() -> "user123"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.user.id").value("user123"))
+            .andExpect(jsonPath("$.user.username").value("testuser"))
+            .andExpect(jsonPath("$.user.role").value("user"));
+    }
+
+    @Test
+    void meThrowsWhenUserNotFound() throws Exception {
+        when(authService.me("nonexistent"))
+            .thenThrow(new RuntimeException("用户不存在"));
+
+        mockMvc.perform(get("/api/auth/me")
+                .principal(() -> "nonexistent"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.user").doesNotExist());
     }
 }
