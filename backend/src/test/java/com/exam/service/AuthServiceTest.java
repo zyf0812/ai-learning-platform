@@ -87,4 +87,65 @@ class AuthServiceTest {
         assertThrows(RuntimeException.class,
             () -> authService.login("testuser", "wrongpass"));
     }
+
+    @Test
+    void registerAdminReturnsPendingStatus() {
+        when(userMapper.findByUsername("adminuser")).thenReturn(null);
+        doNothing().when(userMapper).insert(any(User.class));
+
+        var result = authService.register("adminuser", "password123", "admin");
+
+        assertNull(result.get("token"));
+        assertEquals("管理员申请已提交，请等待 root 审批", result.get("message"));
+        verify(userMapper).insert(any(User.class));
+    }
+
+    @Test
+    void meReturnsUserInfo() {
+        User user = new User();
+        user.setId("u1");
+        user.setUsername("testuser");
+        user.setRole("user");
+
+        when(userMapper.findById("u1")).thenReturn(user);
+
+        var result = authService.me("u1");
+
+        assertEquals("u1", result.get("id"));
+        assertEquals("testuser", result.get("username"));
+        assertEquals("user", result.get("role"));
+    }
+
+    @Test
+    void meWithNonExistentUserThrows() {
+        when(userMapper.findById("nonexistent")).thenReturn(null);
+        assertThrows(RuntimeException.class, () -> authService.me("nonexistent"));
+    }
+
+    @Test
+    void loginWithPendingAdminThrows() {
+        User user = new User();
+        user.setId("u1");
+        user.setUsername("adminuser");
+        user.setPassword(encoder.encode("correctpass"));
+        user.setRole("admin");
+        user.setStatus("pending");
+
+        when(userMapper.findByUsername("adminuser")).thenReturn(user);
+        when(taskQueue.getStatus("", "auth:lock:adminuser")).thenReturn(null);
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.login("adminuser", "correctpass"));
+        assertEquals("你的管理员申请正在审批中，请等待 root 审核", ex.getMessage());
+    }
+
+    @Test
+    void loginWithLockedAccountThrows() {
+        when(taskQueue.getStatus("", "auth:lock:lockeduser")).thenReturn("locked");
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.login("lockeduser", "anypass"));
+        assertEquals("登录尝试过多，请15分钟后再试", ex.getMessage());
+        verify(userMapper, never()).findByUsername(anyString());
+    }
 }
