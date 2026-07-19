@@ -46,6 +46,3 @@ build/
 .m2repo/
 backend/.m2repo/
 backend/.mvn/
-
-# Screenshots
-screenshots/

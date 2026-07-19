@@ -195,13 +195,25 @@ npm run dev
 
 ## 截图
 
-| 登录页 | 仪表盘 | AI 对话 |
-|:------:|:------:|:-------:|
-| ![登录页](screenshots/1-login.png) | ![仪表盘](screenshots/2-dashboard.png) | ![AI 对话](screenshots/3-chat.png) |
+| 登录 | 注册 | 仪表盘 |
+|:----:|:----:|:------:|
+| ![登录](screenshots/01-login.png) | ![注册](screenshots/02-register.png) | ![仪表盘](screenshots/03-dashboard.png) |
 
-| 文档管理 | 考试 | 闪卡 | 学习统计 |
-|:--------:|:----:|:----:|:--------:|
-| ![文档管理](screenshots/4-documents.png) | ![考试](screenshots/5-exams.png) | ![闪卡](screenshots/6-flashcards.png) | ![学习统计](screenshots/7-stats.png) |
+| 文档列表 | 文档详情 | 知识点 | 思维导图 |
+|:--------:|:--------:|:------:|:--------:|
+| ![文档列表](screenshots/04-documents-list.png) | ![文档详情](screenshots/05-document-detail.png) | ![知识点](screenshots/06-knowledge-points.png) | ![思维导图](screenshots/07-mindmap.png) |
+
+| 考试列表 | 生成试卷 | 考试详情 | 在线作答 |
+|:--------:|:--------:|:--------:|:--------:|
+| ![考试列表](screenshots/08-exams-list.png) | ![生成试卷](screenshots/09-exam-generate.png) | ![考试详情](screenshots/10-exam-detail.png) | ![在线作答](screenshots/11-exam-take.png) |
+
+| 考试结果 | 错题本 | 闪卡复习 | AI 对话 |
+|:--------:|:------:|:--------:|:-------:|
+| ![考试结果](screenshots/12-exam-result.png) | ![错题本](screenshots/13-wrong-questions.png) | ![闪卡](screenshots/14-flashcards.png) | ![AI 助手](screenshots/15-ai-chat.png) |
+
+| 学习小组 | 学习统计 | 管理后台 |
+|:--------:|:--------:|:--------:|
+| ![学习小组](screenshots/16-groups.png) | ![学习统计](screenshots/17-stats.png) | ![管理后台](screenshots/18-admin.png) |
 
 ## 路线图
 
