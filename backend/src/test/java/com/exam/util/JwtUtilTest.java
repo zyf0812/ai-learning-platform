@@ -39,4 +39,42 @@ class JwtUtilTest {
     void invalidTokenThrowsException() {
         assertThrows(Exception.class, () -> jwtUtil.parseToken("invalid.token.here"));
     }
+
+    @Test
+    void tokenExpirationWorks() {
+        JwtUtil shortLived = new JwtUtil(SECRET, 0);
+        String token = shortLived.generateToken("user1", "test");
+        assertThrows(Exception.class, () -> shortLived.parseToken(token));
+    }
+
+    @Test
+    void emptyUserIdGeneratesToken() {
+        String token = jwtUtil.generateToken("", "testuser");
+        assertNotNull(token);
+        var claims = jwtUtil.parseToken(token);
+        assertEquals("", claims.getSubject());
+    }
+
+    @Test
+    void emptyUsernameGeneratesToken() {
+        String token = jwtUtil.generateToken("user123", "");
+        assertNotNull(token);
+        var claims = jwtUtil.parseToken(token);
+        assertEquals("", claims.get("username"));
+    }
+
+    @Test
+    void differentSecretsProduceDifferentTokens() {
+        JwtUtil jwtUtil2 = new JwtUtil("different-secret-key-that-is-long-enough-for-hmac-sha-256!!", 7);
+        String token1 = jwtUtil.generateToken("user1", "alice");
+        String token2 = jwtUtil2.generateToken("user1", "alice");
+        assertNotEquals(token1, token2);
+    }
+
+    @Test
+    void cannotParseTokenWithDifferentSecret() {
+        JwtUtil jwtUtil2 = new JwtUtil("different-secret-key-that-is-long-enough-for-hmac-sha-256!!", 7);
+        String token = jwtUtil.generateToken("user1", "alice");
+        assertThrows(Exception.class, () -> jwtUtil2.parseToken(token));
+    }
 }
