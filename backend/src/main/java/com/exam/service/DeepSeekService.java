@@ -31,6 +31,10 @@ public class DeepSeekService {
     }
 
     public String chat(String systemPrompt, String userPrompt) throws IOException {
+        return chat(systemPrompt, userPrompt, 8192);
+    }
+
+    public String chat(String systemPrompt, String userPrompt, int maxTokens) throws IOException {
         var body = Map.of(
                 "model", model,
                 "messages", List.of(
@@ -38,7 +42,7 @@ public class DeepSeekService {
                         Map.of("role", "user", "content", userPrompt)
                 ),
                 "temperature", 0.7,
-                "max_tokens", 4096
+                "max_tokens", maxTokens
         );
 
         var req = new Request.Builder()
@@ -49,7 +53,11 @@ public class DeepSeekService {
                 .build();
 
         try (var resp = client.newCall(req).execute()) {
-            var tree = json.readTree(resp.body().string());
+            String bodyStr = resp.body().string();
+            var tree = json.readTree(bodyStr);
+            if (tree.get("choices") == null) {
+                throw new IOException("DeepSeek 返回异常: " + bodyStr.substring(0, Math.min(500, bodyStr.length())));
+            }
             return tree.get("choices").get(0).get("message").get("content").asText();
         }
     }

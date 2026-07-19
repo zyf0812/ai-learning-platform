@@ -3,6 +3,7 @@ package com.exam.controller;
 import com.exam.dto.CreateConversationRequest;
 import com.exam.dto.SendMessageRequest;
 import com.exam.service.ChatService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class ChatController {
     }
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CreateConversationRequest body, Authentication auth) {
+    public ResponseEntity<?> create(@Valid @RequestBody CreateConversationRequest body, Authentication auth) {
         return ResponseEntity.status(201).body(Map.of("conversation",
             service.createConversation(auth.getName(), body.getTitle())));
     }
@@ -43,7 +44,7 @@ public class ChatController {
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<?> send(@PathVariable String id, @RequestBody SendMessageRequest body) {
+    public ResponseEntity<?> send(@PathVariable String id, @Valid @RequestBody SendMessageRequest body) {
         try {
             return ResponseEntity.ok(Map.of("answer", service.sendMessage(id, body.getQuestion(), body.getRefDoc())));
         } catch (Exception e) {

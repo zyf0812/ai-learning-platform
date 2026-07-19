@@ -11,7 +11,7 @@ interface AuthCtx {
   user: User | null;
   loading: boolean;
   login: (u: string, p: string) => Promise<void>;
-  register: (u: string, p: string, r?: string) => Promise<void>;
+  register: (u: string, p: string, r?: string, captchaToken?: string, captchaCode?: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -73,8 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
-  const register = useCallback(async (username: string, password: string, role?: string) => {
-    const data = await api.register({ username, password, role: role || "user" });
+  const register = useCallback(async (username: string, password: string, role?: string, captchaToken?: string, captchaCode?: string) => {
+    const data = await api.register({ username, password, role: role || "user", captchaToken: captchaToken || "", captchaCode: captchaCode || "" });
     localStorage.setItem("token", data.token);
     lastActivity.current = Date.now();
     setUser(data.user);

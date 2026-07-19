@@ -7,10 +7,12 @@ import com.exam.model.KnowledgePoint;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
 @Service
+@Transactional
 public class KnowledgeService {
     private final KnowledgeMapper mapper;
     private final DeepSeekService deepSeek;

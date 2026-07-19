@@ -41,6 +41,19 @@ export default function ExamDetailPage() {
   if (loading) return <div className="space-y-2">{Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-20 w-full" />)}</div>;
   if (!exam) return null;
 
+  const handleExport = () => {
+    const token = localStorage.getItem("token");
+    fetch(`/api/exams/${exam.id}/export`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = `${exam.title}.docx`;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
+      });
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -49,6 +62,9 @@ export default function ExamDetailPage() {
           共 {exam.questions?.length || 0} 题 · {exam.questionTypes}
           {hasAttempt && <span className="text-green-600 ml-2">✅ 已完成</span>}
         </p>
+        <Button variant="outline" size="sm" className="mt-2" onClick={handleExport}>
+          导出 Word
+        </Button>
       </div>
       {hasAttempt ? (
         <Button className="w-full" size="lg" onClick={() => router.push(`/exams/${exam.id}/result`)}>

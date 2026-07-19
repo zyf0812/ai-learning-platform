@@ -52,38 +52,38 @@ body { overflow: hidden !important; height: 100% !important; margin: 0 !importan
 }
 
 :root {
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.982 0.012 95);
+  --foreground: oklch(0.19 0.03 250);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.19 0.03 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.488 0.243 264.376);
+  --popover-foreground: oklch(0.19 0.03 250);
+  --primary: oklch(0.53 0.145 214);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.95 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.95 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.955 0.018 92);
+  --secondary-foreground: oklch(0.24 0.035 250);
+  --muted: oklch(0.95 0.012 92);
+  --muted-foreground: oklch(0.48 0.035 250);
+  --accent: oklch(0.94 0.038 180);
+  --accent-foreground: oklch(0.23 0.045 210);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.97 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --border: oklch(0.89 0.018 90);
+  --input: oklch(0.89 0.018 90);
+  --ring: oklch(0.58 0.13 205);
+  --chart-1: oklch(0.56 0.14 210);
+  --chart-2: oklch(0.62 0.12 154);
+  --chart-3: oklch(0.72 0.13 78);
+  --chart-4: oklch(0.58 0.14 18);
+  --chart-5: oklch(0.5 0.1 255);
+  --radius: 0.5rem;
+  --sidebar: oklch(0.97 0.01 95);
+  --sidebar-foreground: oklch(0.19 0.03 250);
+  --sidebar-primary: oklch(0.53 0.145 214);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.95 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --sidebar-accent: oklch(0.94 0.038 180);
+  --sidebar-accent-foreground: oklch(0.23 0.045 210);
+  --sidebar-border: oklch(0.89 0.018 90);
+  --sidebar-ring: oklch(0.58 0.13 205);
 }
 
 .dark {
@@ -132,6 +132,55 @@ body { overflow: hidden !important; height: 100% !important; margin: 0 !importan
   }
 }
 
+.app-shell {
+  background:
+    linear-gradient(135deg, oklch(0.99 0.014 98) 0%, oklch(0.965 0.025 182) 42%, oklch(0.98 0.018 74) 100%);
+  position: relative;
+}
+
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(oklch(0.35 0.03 240 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, oklch(0.35 0.03 240 / 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+.dark .app-shell {
+  background:
+    linear-gradient(135deg, oklch(0.14 0.018 245) 0%, oklch(0.17 0.02 190) 52%, oklch(0.12 0.018 250) 100%);
+}
+
+.surface-panel {
+  background: oklch(1 0 0 / 0.82);
+  border: 1px solid oklch(0.82 0.018 95 / 0.72);
+  box-shadow: 0 18px 55px oklch(0.25 0.04 230 / 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.dark .surface-panel {
+  background: oklch(0.18 0.02 245 / 0.78);
+  border-color: oklch(1 0 0 / 0.1);
+  box-shadow: 0 18px 55px oklch(0 0 0 / 0.28);
+}
+
+.page-kicker {
+  color: oklch(0.42 0.05 215);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.dark .page-kicker {
+  color: oklch(0.78 0.08 190);
+}
+
 /* ===== 滚动条 ===== */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -172,14 +221,15 @@ body { overflow: hidden !important; height: 100% !important; margin: 0 !importan
 
 /* ===== 磨砂玻璃效果 ===== */
 .glass {
-  background: oklch(1 0 0 / 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid oklch(0 0 0 / 0.06);
+  background: oklch(1 0 0 / 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid oklch(0.72 0.02 92 / 0.35);
+  box-shadow: 0 12px 30px oklch(0.26 0.04 230 / 0.06);
 }
 .dark .glass {
-  background: oklch(0.13 0 0 / 0.7);
-  border-bottom: 1px solid oklch(1 0 0 / 0.06);
+  background: oklch(0.13 0.018 245 / 0.72);
+  border-bottom: 1px solid oklch(1 0 0 / 0.08);
 }
 
 /* ===== Markdown 渲染 ===== */

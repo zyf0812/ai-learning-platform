@@ -5,11 +5,13 @@ import com.exam.model.User;
 import com.exam.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class AuthService {
 
     private final UserMapper userMapper;
@@ -27,6 +29,10 @@ public class AuthService {
     public Map<String, Object> register(String username, String password, String role) {
         User existing = userMapper.findByUsername(username);
         if (existing != null) throw new RuntimeException("用户名已存在");
+
+        // 密码强度校验
+        String pwError = checkPasswordStrength(password);
+        if (pwError != null) throw new RuntimeException(pwError);
 
         User user = new User();
         user.setId(UUID.randomUUID().toString().substring(0, 8));
@@ -86,5 +92,34 @@ public class AuthService {
         User user = userMapper.findById(userId);
         if (user == null) throw new RuntimeException("用户不存在");
         return Map.of("id", user.getId(), "username", user.getUsername(), "role", user.getRole(), "createdAt", user.getCreatedAt());
+    }
+
+    private String checkPasswordStrength(String password) {
+        if (password.length() < 8) return "密码长度至少8位";
+
+        boolean hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
+        for (char c : password.toCharArray()) {
+            if (c >= 'A' && c <= 'Z') hasUpper = true;
+            else if (c >= 'a' && c <= 'z') hasLower = true;
+            else if (c >= '0' && c <= '9') hasDigit = true;
+            else hasSpecial = true;
+        }
+
+        int kinds = 0;
+        if (hasUpper) kinds++;
+        if (hasLower) kinds++;
+        if (hasDigit) kinds++;
+        if (hasSpecial) kinds++;
+
+        if (kinds < 2) return "密码需包含字母和数字";
+        if (kinds < 3) return "建议密码包含大写字母、小写字母、数字和特殊字符中的至少3种";
+
+        // 常见弱密码
+        String[] weak = {"12345678", "123456789", "password", "qwerty123", "abc123456", "88888888", "11111111"};
+        for (String w : weak) {
+            if (password.equalsIgnoreCase(w)) return "密码过于简单，请换一个";
+        }
+
+        return null; // 通过
     }
 }

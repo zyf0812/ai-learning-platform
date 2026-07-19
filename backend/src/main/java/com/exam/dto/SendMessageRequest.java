@@ -1,6 +1,9 @@
 package com.exam.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class SendMessageRequest {
+    @NotBlank(message = "问题内容不能为空")
     private String question;
     private String refDoc;
 

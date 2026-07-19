@@ -3,6 +3,7 @@ package com.exam.controller;
 import com.exam.dto.GenerateExamRequest;
 import com.exam.dto.SubmitExamRequest;
 import com.exam.service.ExamService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,19 +24,19 @@ public class ExamController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable String id) {
-        var exam = service.get(id);
+    public ResponseEntity<?> get(@PathVariable String id, Authentication auth) {
+        var exam = service.get(id, auth.getName());
         return exam != null ? ResponseEntity.ok(Map.of("exam", exam)) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
-        service.delete(id);
+    public ResponseEntity<?> delete(@PathVariable String id, Authentication auth) {
+        service.delete(id, auth.getName());
         return ResponseEntity.ok(Map.of("success", true));
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<?> generate(@RequestBody GenerateExamRequest body, Authentication auth) {
+    public ResponseEntity<?> generate(@Valid @RequestBody GenerateExamRequest body, Authentication auth) {
         var result = service.generateAsync(auth.getName(), body.getTitle(), body.getDocumentIds(),
             body.getTypes(), body.getCount(), body.getTypeCounts(), body.isQuestionBankMode());
         return ResponseEntity.status(201).body(result);

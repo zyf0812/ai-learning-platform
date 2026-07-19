@@ -19,6 +19,7 @@ npm-debug.log*
 .idea/
 *.iml
 .vscode/
+.trae/
 *.swp
 *.swo
 *~
@@ -36,3 +37,15 @@ pgvector-src/
 # Build
 dist/
 build/
+*.tar.gz
+
+# Logs
+*.log
+
+# Maven local repo cache
+.m2repo/
+backend/.m2repo/
+backend/.mvn/
+
+# Screenshots
+screenshots/

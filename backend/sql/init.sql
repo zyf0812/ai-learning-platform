@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS "User" (
     id VARCHAR(20) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(200) NOT NULL,
+    role VARCHAR(20) DEFAULT 'user',
+    status VARCHAR(20) DEFAULT 'active',
+    "superviseCode" VARCHAR(50),
     "createdAt" TIMESTAMP DEFAULT NOW()
 );
 
@@ -19,6 +22,7 @@ CREATE TABLE IF NOT EXISTS "Document" (
     "fileType" VARCHAR(20),
     content TEXT,
     "userId" VARCHAR(20) REFERENCES "User"(id),
+    "isQuestionBank" BOOLEAN DEFAULT FALSE,
     "createdAt" TIMESTAMP DEFAULT NOW()
 );
 

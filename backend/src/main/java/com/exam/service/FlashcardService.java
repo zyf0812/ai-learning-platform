@@ -5,11 +5,13 @@ import com.exam.mapper.KnowledgeMapper;
 import com.exam.model.FlashCard;
 import com.exam.model.KnowledgePoint;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
+@Transactional
 public class FlashcardService {
     private final FlashCardMapper mapper;
     private final KnowledgeMapper knowledgeMapper;

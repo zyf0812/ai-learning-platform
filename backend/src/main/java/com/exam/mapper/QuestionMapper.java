@@ -13,8 +13,9 @@ public interface QuestionMapper {
             "VALUES (#{id}, #{examId}, #{type}, #{content}, #{options}, #{answer}, #{explanation}, NOW())")
     void insert(Question q);
 
-    @Select("SELECT * FROM \"Question\" WHERE id IN (${ids})")
-    List<Question> findByIds(@Param("ids") String ids);
+    @Select("<script>SELECT * FROM \"Question\" WHERE id IN " +
+            "<foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach></script>")
+    List<Question> findByIds(@Param("ids") List<String> ids);
 
     @Select("SELECT * FROM \"Question\" WHERE id = #{id}")
     Question findById(String id);

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/components/auth-context";
-import { ThemeProvider } from "@/components/theme-context";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,12 +32,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{
-          __html: "!function(){try{var e=JSON.parse(localStorage.getItem('theme-config'));e&&'dark'===e.mode&&document.documentElement.classList.add('dark')}catch(e){}}()"
-        }} />
       </head>
       <body className="h-full flex flex-col" style={{ overflow: "hidden" }} suppressHydrationWarning>
-        <ThemeProvider><AuthProvider>{children}</AuthProvider></ThemeProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
