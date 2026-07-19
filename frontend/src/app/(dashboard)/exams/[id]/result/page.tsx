@@ -59,14 +59,24 @@ export default function ExamResultPage() {
         {exam?.questions?.map((q: any, i: number) => {
           const g = graded[q.id] || {};
           const isCorrect = g.correct;
+          const isFuzzy = g.isFuzzyMatch;
+          // 三种状态：完全正确(绿) / 答案相近(黄) / 错误(红)
+          const borderColor = isCorrect ? (isFuzzy ? "border-l-yellow-500" : "border-l-green-500") : "border-l-red-500";
+          const iconColor = isCorrect ? (isFuzzy ? "text-yellow-600" : "text-green-600") : "text-red-500";
+          const icon = isCorrect ? (isFuzzy ? "🟡" : "✅") : "❌";
 
           return (
-            <Card key={q.id} className={`p-4 border-l-4 ${isCorrect ? "border-l-green-500" : "border-l-red-500"}`}>
+            <Card key={q.id} className={`p-4 border-l-4 ${borderColor}`}>
               <div className="flex items-start gap-2 mb-2">
                 <Badge variant="outline" className="text-xs">{TYPE_LABELS[q.type] || q.type}</Badge>
-                <span className={`text-xs font-bold ${isCorrect ? "text-green-600" : "text-red-500"}`}>
-                  {isCorrect ? "✅" : "❌"}
+                <span className={`text-xs font-bold ${iconColor}`}>
+                  {icon}
                 </span>
+                {isFuzzy && (
+                  <Badge variant="outline" className="text-xs text-yellow-700 bg-yellow-50 border-yellow-300">
+                    答案相近 · 命中 {Math.round((g.hitRatio || 0) * 100)}%
+                  </Badge>
+                )}
                 <span className="font-medium">{i + 1}. {q.content}</span>
               </div>
 

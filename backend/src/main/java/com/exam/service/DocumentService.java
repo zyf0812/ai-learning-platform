@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.util.*;
 
 @Service
+@Transactional
 public class DocumentService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
@@ -34,6 +36,14 @@ public class DocumentService {
 
     public List<Document> list(String userId) {
         return docMapper.findByUserId(userId);
+    }
+
+    public Document get(String id, String userId) {
+        Document doc = docMapper.findById(id);
+        if (doc != null && !doc.getUserId().equals(userId)) {
+            throw new RuntimeException("无权访问该文档");
+        }
+        return doc;
     }
 
     public Document get(String id) {
@@ -73,6 +83,13 @@ public class DocumentService {
         }).start();
 
         return doc;
+    }
+
+    public void delete(String id, String userId) {
+        Document doc = docMapper.findById(id);
+        if (doc == null) throw new RuntimeException("文档不存在");
+        if (!doc.getUserId().equals(userId)) throw new RuntimeException("无权删除该文档");
+        docMapper.deleteById(id);
     }
 
     public void delete(String id) {

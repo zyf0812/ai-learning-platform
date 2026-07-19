@@ -37,15 +37,15 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> get(@PathVariable String id) {
-        var doc = docService.get(id);
+    public ResponseEntity<?> get(@PathVariable String id, Authentication auth) {
+        var doc = docService.get(id, auth.getName());
         if (doc == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(Map.of("document", doc));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
-        docService.delete(id);
+    public ResponseEntity<?> delete(@PathVariable String id, Authentication auth) {
+        docService.delete(id, auth.getName());
         return ResponseEntity.ok(Map.of("success", true));
     }
 }

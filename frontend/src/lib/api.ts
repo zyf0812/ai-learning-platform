@@ -19,7 +19,8 @@ export async function request(path: string, options: RequestInit = {}) {
 }
 
 export const api = {
-  register: (body: { username: string; password: string; role?: string }) =>
+  captcha: () => request("/api/auth/captcha"),
+  register: (body: { username: string; password: string; role?: string; captchaToken: string; captchaCode: string }) =>
     request("/api/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { username: string; password: string }) =>
     request("/api/auth/login", { method: "POST", body: JSON.stringify(body) }),
@@ -82,7 +83,7 @@ export const api = {
   wrongQuestions: {
     list: () => request("/api/wrong-questions"),
     update: (body: { id: string; mastered?: boolean }) =>
-      request("/api/wrong-questions", { method: "PUT", body: JSON.stringify(body) }),
+      request("/api/wrong-questions", { method: "PATCH", body: JSON.stringify(body) }),
   },
 
   groups: {
