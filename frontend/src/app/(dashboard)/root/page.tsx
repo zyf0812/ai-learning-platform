@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth-context";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import ExamQuestions from "@/components/root/exam-questions";
 import ChatMessages from "@/components/root/chat-messages";
 
@@ -27,6 +28,7 @@ export default function RootPanel() {
   const [userStats, setUserStats] = useState<any>(null);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
@@ -56,10 +58,15 @@ export default function RootPanel() {
   };
 
   const deleteUser = async (id: string) => {
-    if (!confirm("确认删除此用户？")) return;
-    await api.root.deleteUser(id);
+    setDeleteTarget(id);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!deleteTarget) return;
+    await api.root.deleteUser(deleteTarget);
     loadData();
     setMsg("已删除");
+    setDeleteTarget(null);
   };
 
   const viewUser = async (u: any) => {
@@ -227,6 +234,15 @@ export default function RootPanel() {
           <Button onClick={broadcast}>📢 立即广播</Button>
         </Card>
       )}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="确认删除"
+        message="确认删除此用户？此操作不可恢复。"
+        confirmText="删除"
+        danger
+        onConfirm={confirmDeleteUser}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

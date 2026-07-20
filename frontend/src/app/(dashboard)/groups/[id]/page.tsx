@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import GroupChat from "@/components/groups/group-chat";
 import GroupMembers from "@/components/groups/group-members";
 import GroupNotify from "@/components/groups/group-notify";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export default function GroupDetailPage() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function GroupDetailPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [tab, setTab] = useState<"chat" | "members" | "notify">("chat");
   const [msg, setMsg] = useState("");
+  const [showDisbandConfirm, setShowDisbandConfirm] = useState(false);
 
   const load = async () => {
     try {
@@ -67,7 +69,10 @@ export default function GroupDetailPage() {
   };
 
   const disband = async () => {
-    if (!confirm("解散群组将删除所有消息和文件，不可恢复！")) return;
+    setShowDisbandConfirm(true);
+  };
+
+  const confirmDisband = async () => {
     await api.groups.delete(params.id as string);
     router.push("/groups");
   };
@@ -141,6 +146,16 @@ export default function GroupDetailPage() {
           onSent={loadMessages}
         />
       )}
+
+      <ConfirmDialog
+        open={showDisbandConfirm}
+        title="解散群组"
+        message="解散群组将删除所有消息和文件，不可恢复！确定要解散吗？"
+        confirmText="解散"
+        danger
+        onConfirm={confirmDisband}
+        onCancel={() => setShowDisbandConfirm(false)}
+      />
     </div>
   );
 }
