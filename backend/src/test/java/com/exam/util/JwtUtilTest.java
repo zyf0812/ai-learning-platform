@@ -39,4 +39,24 @@ class JwtUtilTest {
     void invalidTokenThrowsException() {
         assertThrows(Exception.class, () -> jwtUtil.parseToken("invalid.token.here"));
     }
+
+    @Test
+    void tamperedTokenThrowsSignatureException() {
+        String token = jwtUtil.generateToken("user123", "testuser");
+        // 修改签名段最后一个字符，破坏签名验证
+        char last = token.charAt(token.length() - 1);
+        char replacement = last == 'A' ? 'B' : 'A';
+        String tampered = token.substring(0, token.length() - 1) + replacement;
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(tampered));
+    }
+
+    @Test
+    void emptyTokenThrowsException() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(""));
+    }
+
+    @Test
+    void nullTokenThrowsException() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(null));
+    }
 }
