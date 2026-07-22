@@ -7,8 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeHighlight from "rehype-highlight";
+import rehypeRaw from "rehype-raw";
+import rehypeKatex from "rehype-katex";
+import "highlight.js/styles/github.min.css";
+import "katex/dist/katex.min.css";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, request } from "@/lib/api";
+import { api } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -61,18 +67,27 @@ export default function ChatDetailPage() {
   };
 
   useEffect(() => {
-    api.conversations.get(params.id as string)
-      .then(d => {
+    let cancelled = false;
+    const init = async () => {
+      try {
+        const d = await api.conversations.get(params.id as string);
+        if (cancelled) return;
         if (d.error) { router.push("/chat"); return; }
         setConv(d.conversation);
-        loadMessages(0);
-      })
-      .catch(() => router.push("/chat"))
-      .finally(() => setLoading(false));
+        await loadMessages(0);
+      } catch {
+        if (!cancelled) router.push("/chat");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    init();
 
     api.documents.list().then(d => {
       setDocs(d.documents || []);
     }).catch(() => {});
+
+    return () => { cancelled = true; };
   }, [params.id]);
 
   useEffect(() => {
@@ -95,15 +110,31 @@ export default function ChatDetailPage() {
     const q = question.trim();
     setQuestion("");
 
-    setMessages(prev => [...prev, { id: "tmp-u-" + Date.now(), role: "user", content: q }, { id: "tmp-a-" + Date.now(), role: "assistant", content: "typing" }]);
+    const tmpUId = "tmp-u-" + Date.now();
+    const tmpAId = "tmp-a-" + Date.now();
+    setMessages(prev => [...prev, { id: tmpUId, role: "user", content: q }, { id: tmpAId, role: "assistant", content: "" }]);
 
     try {
-      const body: any = { question: q };
+      const body: { question: string; refDoc?: string } = { question: q };
       if (attachDoc) body.refDoc = attachDoc.id;
-      const data = await request(`/api/conversations/${params.id}`, { method: "POST", body: JSON.stringify(body) });
-      setMessages(prev => [...prev.slice(0, -1), { id: "real-a-" + Date.now(), role: "assistant", content: data.answer }]);
+
+      await api.conversations.sendStream(
+        params.id as string,
+        body,
+        (token) => {
+          setMessages(prev => prev.map(m =>
+            m.id === tmpAId ? { ...m, content: m.content + token } : m
+          ));
+        }
+      );
+      // 流式结束后，从后端重新加载消息，确保 ID/顺序/内容一致
+      await loadMessages(0);
     } catch (err: any) {
-      setMessages(prev => [...prev.slice(0, -2), { id: "err-" + Date.now(), role: "assistant", content: `❌ ${err.message}` }]);
+      setMessages(prev => prev.map(m =>
+        m.id === tmpAId
+          ? { ...m, id: "err-" + Date.now(), content: m.content || `❌ ${err.message}` }
+          : m
+      ));
     } finally { setSending(false); }
   };
 
@@ -150,7 +181,7 @@ export default function ChatDetailPage() {
 
           {messages.map((msg, idx) => {
             const isUser = msg.role === "user";
-            const isTyping = msg.content === "typing";
+            const isTyping = msg.content === "" && msg.id.startsWith("tmp-");
             const showAvatar = idx === 0 || messages[idx - 1]?.role !== msg.role;
 
             return (
@@ -181,17 +212,31 @@ export default function ChatDetailPage() {
                         <span className="w-2 h-2 bg-muted-foreground/40 rounded-full animate-bounce" style={{animationDelay: "300ms"}} />
                       </div>
                     ) : (
-                      <div className={`markdown-body ${isUser ? "text-white [&_a]:text-white/80" : ""}`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}
+                      <div className={`markdown-body ${isUser ? "text-white [&_a]:text-white/80 [&_code]:bg-white/20" : ""}`}>
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeHighlight, rehypeRaw, rehypeKatex]}
                           components={{
                             code({ className, children, ...props }: any) {
                               const isBlock = className?.startsWith("language-");
                               if (isBlock) {
-                                return <pre className="bg-[#1e1e2e] text-[#cdd6f4] rounded-lg p-4 overflow-x-auto text-sm my-3 border border-white/5"><code className={className} {...props}>{children}</code></pre>;
+                                return (
+                                  <pre className="code-block">
+                                    <code className={className} {...props}>{children}</code>
+                                  </pre>
+                                );
                               }
-                              return <code className="bg-muted text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded text-xs font-mono" {...props}>{children}</code>;
+                              return <code {...props}>{children}</code>;
                             },
-                            pre({ children }) { return <>{children}</>; }
+                            a({ href, children }) {
+                              return <a href={href} className="text-primary hover:underline break-all" target="_blank" rel="noopener noreferrer">{children}</a>;
+                            },
+                            img({ src, alt }) {
+                              return <img src={src} alt={alt} className="max-w-full rounded-lg my-4" />;
+                            },
+                            hr({}) {
+                              return <hr className="my-6 border-border" />;
+                            },
                           }}
                         >{msg.content}</ReactMarkdown>
                       </div>

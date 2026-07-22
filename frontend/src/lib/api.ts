@@ -68,6 +68,68 @@ export const api = {
       request(`/api/conversations/${id}/messages?limit=${limit}&offset=${offset}`),
     send: (id: string, body: { content: string; documentId?: string }) =>
       request(`/api/conversations/${id}`, { method: "POST", body: JSON.stringify(body) }),
+    // 流式发送：onToken 每收到一个 token 回调，返回完整回答
+    sendStream: async (
+      id: string,
+      body: { question: string; refDoc?: string },
+      onToken: (token: string) => void,
+      signal?: AbortSignal
+    ): Promise<string> => {
+      const token = localStorage.getItem("token");
+      const baseUrl = typeof window !== "undefined" && process.env.NODE_ENV === "development"
+        ? "http://localhost:8080"
+        : "";
+      const res = await fetch(`${baseUrl}/api/conversations/${id}/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+        signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = "请求失败";
+        try { msg = JSON.parse(text)?.error || msg; } catch {}
+        throw new Error(msg);
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullAnswer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // SSE 格式：event: xxx\ndata: yyy\n\n
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const evt of events) {
+          const lines = evt.split("\n");
+          let eventName = "message";
+          let data = "";
+          for (const line of lines) {
+            if (line.startsWith("event:")) eventName = line.slice(6).trim();
+            else if (line.startsWith("data:")) data += line.slice(5).trim();
+          }
+          if (eventName === "token" && data) {
+            fullAnswer += data;
+            onToken(data);
+          } else if (eventName === "done") {
+            return fullAnswer;
+          } else if (eventName === "error") {
+            throw new Error(data || "AI 回答失败");
+          }
+        }
+      }
+      return fullAnswer;
+    },
   },
 
   flashcards: {

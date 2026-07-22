@@ -232,21 +232,180 @@ body { overflow: hidden !important; height: 100% !important; margin: 0 !importan
   border-bottom: 1px solid oklch(1 0 0 / 0.08);
 }
 
-/* ===== Markdown 渲染 ===== */
-.markdown-body p { margin: 0.5em 0; line-height: 1.7; }
+/* ===== Markdown 渲染样式 ===== */
+.markdown-body { font-size: inherit; line-height: 1.7; }
+
+.markdown-body p { margin: 0.8em 0; }
 .markdown-body p:first-child { margin-top: 0; }
-.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { margin: 1.2em 0 0.5em; font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
-.markdown-body h1 { font-size: 1.25em; }
-.markdown-body h2 { font-size: 1.15em; }
-.markdown-body h3 { font-size: 1.05em; }
-.markdown-body ul, .markdown-body ol { padding-left: 1.5em; margin: 0.5em 0; }
+
+.markdown-body h1 { font-size: 1.5em; font-weight: 700; margin: 1.8em 0 0.6em; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.3em; font-weight: 600; margin: 1.5em 0 0.5em; }
+.markdown-body h3 { font-size: 1.15em; font-weight: 600; margin: 1.2em 0 0.4em; }
+.markdown-body h4 { font-size: 1em; font-weight: 600; margin: 1em 0 0.3em; }
+.markdown-body h5 { font-size: 0.95em; font-weight: 600; margin: 0.8em 0 0.3em; }
+.markdown-body h6 { font-size: 0.9em; font-weight: 600; margin: 0.8em 0 0.3em; }
+
+.markdown-body ul { list-style-type: disc; padding-left: 1.6em; margin: 0.8em 0; }
+.markdown-body ol { list-style-type: decimal; padding-left: 1.6em; margin: 0.8em 0; }
 .markdown-body li { margin: 0.3em 0; }
-.markdown-body blockquote { border-left: 3px solid var(--border); padding-left: 1em; margin: 0.5em 0; color: var(--muted-foreground); }
-.markdown-body table { border-collapse: collapse; margin: 0.8em 0; width: 100%; font-size: 0.9em; }
-.markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: 0.5em 0.75em; text-align: left; }
-.markdown-body th { background: var(--muted); font-weight: 500; }
-.markdown-body hr { border: none; border-top: 1px solid var(--border); margin: 1.2em 0; }
-.markdown-body a { color: var(--primary); text-decoration: none; }
+.markdown-body li > p { margin: 0.2em 0; }
+.markdown-body li > ul, .markdown-body li > ol { margin: 0.3em 0; padding-left: 1.4em; }
+
+.markdown-body blockquote {
+  border-left: 3px solid var(--primary);
+  padding: 0.5em 1em;
+  margin: 1em 0;
+  background: var(--muted);
+  border-radius: 0 0.4em 0.4em 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.markdown-body blockquote p { margin: 0.3em 0; }
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.markdown-body th {
+  background: var(--muted);
+  font-weight: 600;
+}
+.markdown-body tr:hover { background: var(--accent); }
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5em 0;
+}
+
+.markdown-body a {
+  color: var(--primary);
+  text-decoration: none;
+}
 .markdown-body a:hover { text-decoration: underline; }
+
 .markdown-body strong { font-weight: 600; }
-.markdown-body code { font-family: var(--font-mono); font-size: 0.875em; }
+.markdown-body em { font-style: italic; }
+.markdown-body del { text-decoration: line-through; color: var(--muted-foreground); }
+
+.markdown-body code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85em;
+}
+.markdown-body :not(pre) > code {
+  background: var(--muted);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25em;
+}
+
+.markdown-body pre {
+  margin: 1em 0;
+  padding: 1em;
+  background: var(--muted);
+  border-radius: 0.5em;
+  overflow-x: auto;
+}
+.markdown-body pre code { font-size: 0.85em; line-height: 1.6; }
+
+.markdown-body img { max-width: 100%; border-radius: 0.4em; margin: 1em 0; }
+
+.markdown-body details {
+  margin: 1em 0;
+  padding: 0.5em;
+  background: var(--muted);
+  border-radius: 0.4em;
+}
+.markdown-body summary { cursor: pointer; font-weight: 500; }
+
+.markdown-body kbd {
+  display: inline-block;
+  padding: 0.1em 0.35em;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.2em;
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+}
+
+.markdown-body dl { margin: 1em 0; }
+.markdown-body dt { font-weight: 600; margin-top: 0.5em; }
+.markdown-body dd { margin-left: 1em; margin-top: 0.2em; }
+
+.markdown-body .task-list-item { list-style: none; }
+.markdown-body .task-list-item input[type="checkbox"] { margin-right: 0.5em; }
+
+.markdown-body sup { font-size: 0.75em; vertical-align: super; }
+.markdown-body sub { font-size: 0.75em; vertical-align: sub; }
+
+.markdown-body mark {
+  background: var(--accent);
+  padding: 0.1em 0.3em;
+  border-radius: 0.2em;
+}
+
+/* LaTeX 数学公式 */
+.markdown-body .math { font-family: KaTeX_Main, Times New Roman, serif; }
+.markdown-body .katex { font-size: 1.1em; }
+.markdown-body .katex-display { margin: 0.8em 0; overflow-x: auto; }
+
+/* ===== 代码块样式 ===== */
+.markdown-body pre.code-block {
+  background: #f6f8fa;
+  border: none;
+}
+.markdown-body pre.code-block code {
+  color: #24292f;
+}
+.dark .markdown-body pre.code-block {
+  background: #1c1c1c;
+}
+.dark .markdown-body pre.code-block code {
+  color: #e6edf3;
+}
+
+/* 代码块滚动条 */
+.markdown-body pre::-webkit-scrollbar { height: 6px; }
+.markdown-body pre::-webkit-scrollbar-track { background: transparent; }
+.markdown-body pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* GitHub 风格语法高亮 */
+.markdown-body .hljs-keyword { color: #cf222e; }
+.markdown-body .hljs-string { color: #0a3069; }
+.markdown-body .hljs-title { color: #8957e5; }
+.markdown-body .hljs-function .hljs-title { color: #8957e5; }
+.markdown-body .hljs-type { color: #8957e5; }
+.markdown-body .hljs-params { color: #116329; }
+.markdown-body .hljs-comment { color: #8b949e; font-style: italic; }
+.markdown-body .hljs-number { color: #005cc5; }
+.markdown-body .hljs-variable { color: #0550ae; }
+.markdown-body .hljs-attribute { color: #0550ae; }
+.markdown-body .hljs-meta { color: #8957e5; }
+.markdown-body .hljs-selector-tag { color: #cf222e; }
+.markdown-body .hljs-selector-class { color: #8957e5; }
+.markdown-body .hljs-selector-id { color: #0550ae; }
+.markdown-body .hljs-built_in { color: #8957e5; }
+.markdown-body .hljs-property { color: #0550ae; }
+
+.dark .markdown-body .hljs-keyword { color: #f85149; }
+.dark .markdown-body .hljs-string { color: #79c0ff; }
+.dark .markdown-body .hljs-title { color: #d2a8ff; }
+.dark .markdown-body .hljs-function .hljs-title { color: #d2a8ff; }
+.dark .markdown-body .hljs-type { color: #d2a8ff; }
+.dark .markdown-body .hljs-params { color: #a7d129; }
+.dark .markdown-body .hljs-comment { color: #8b949e; font-style: italic; }
+.dark .markdown-body .hljs-number { color: #79c0ff; }
+.dark .markdown-body .hljs-variable { color: #79c0ff; }
+.dark .markdown-body .hljs-attribute { color: #79c0ff; }
+.dark .markdown-body .hljs-meta { color: #d2a8ff; }
+.dark .markdown-body .hljs-selector-tag { color: #f85149; }
+.dark .markdown-body .hljs-selector-class { color: #d2a8ff; }
+.dark .markdown-body .hljs-selector-id { color: #79c0ff; }
+.dark .markdown-body .hljs-built_in { color: #d2a8ff; }
+.dark .markdown-body .hljs-property { color: #79c0ff; }
