@@ -6,6 +6,7 @@ import com.exam.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -139,7 +140,9 @@ public class ChatService {
 
     /**
      * 流式发送消息：逐 token 回调，最后保存完整回答
+     * 使用 REQUIRES_NEW 确保在新线程中也能正确执行事务
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendMessageStream(String conversationId, String question, String documentId,
                                   Consumer<String> onToken) throws Exception {
         Conversation conv = mapper.findById(conversationId);
