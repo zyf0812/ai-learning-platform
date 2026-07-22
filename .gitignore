@@ -24,6 +24,9 @@ npm-debug.log*
 *.swo
 *~
 
+# TRAE AI 规则文件（仅本地使用）
+AGENTS.md
+
 # OS
 .DS_Store
 Thumbs.db
