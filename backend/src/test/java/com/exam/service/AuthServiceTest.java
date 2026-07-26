@@ -87,4 +87,61 @@ class AuthServiceTest {
         assertThrows(RuntimeException.class,
             () -> authService.login("testuser", "wrongpass"));
     }
+
+    @Test
+    void registerWithShortPasswordThrows() {
+        when(userMapper.findByUsername("newuser")).thenReturn(null);
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.register("newuser", "abc123", "user"));
+        assertEquals("密码长度至少8位", ex.getMessage());
+    }
+
+    @Test
+    void registerWithOnlyLettersThrows() {
+        when(userMapper.findByUsername("newuser")).thenReturn(null);
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.register("newuser", "abcdefgh", "user"));
+        assertEquals("密码需包含字母和数字", ex.getMessage());
+    }
+
+    @Test
+    void registerWithCommonWeakPasswordThrows() {
+        when(userMapper.findByUsername("newuser")).thenReturn(null);
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.register("newuser", "password", "user"));
+        assertEquals("密码过于简单，请换一个", ex.getMessage());
+    }
+
+    @Test
+    void registerWithPassword12345678Throws() {
+        when(userMapper.findByUsername("newuser")).thenReturn(null);
+
+        var ex = assertThrows(RuntimeException.class,
+            () -> authService.register("newuser", "12345678", "user"));
+        assertEquals("密码过于简单，请换一个", ex.getMessage());
+    }
+
+    @Test
+    void registerWithStrongPasswordSucceeds() {
+        when(userMapper.findByUsername("newuser")).thenReturn(null);
+        doNothing().when(userMapper).insert(any(User.class));
+
+        var result = authService.register("newuser", "Abc123!!", "user");
+
+        assertNotNull(result.get("token"));
+    }
+
+    @Test
+    void registerAdminPendingStatus() {
+        when(userMapper.findByUsername("admin")).thenReturn(null);
+        doNothing().when(userMapper).insert(any(User.class));
+
+        var result = authService.register("admin", "Admin123!", "admin");
+
+        assertNull(result.get("token"));
+        assertEquals("管理员申请已提交，请等待 root 审批", result.get("message"));
+    }
 }
