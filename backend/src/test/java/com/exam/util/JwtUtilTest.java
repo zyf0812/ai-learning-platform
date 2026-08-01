@@ -39,4 +39,71 @@ class JwtUtilTest {
     void invalidTokenThrowsException() {
         assertThrows(Exception.class, () -> jwtUtil.parseToken("invalid.token.here"));
     }
+
+    @Test
+    void tokenContainsUsernameClaim() {
+        String token = jwtUtil.generateToken("uid-999", "johndoe");
+        var claims = jwtUtil.parseToken(token);
+        assertEquals("johndoe", claims.get("username", String.class));
+    }
+
+    @Test
+    void tokenExpirationIsCorrectFor7Days() {
+        long before = System.currentTimeMillis();
+        String token = jwtUtil.generateToken("u1", "x");
+        long after = System.currentTimeMillis();
+
+        var claims = jwtUtil.parseToken(token);
+
+        long expMillis = claims.getExpiration().getTime();
+        long expectedMin = before + 7L * 24 * 3600 * 1000 - 1000;
+        long expectedMax = after + 7L * 24 * 3600 * 1000 + 1000;
+
+        assertTrue(expMillis >= expectedMin && expMillis <= expectedMax,
+            "Expiration " + expMillis + " should be between " + expectedMin + " and " + expectedMax);
+    }
+
+    @Test
+    void tokenIssuedAtIsWithinAcceptableRange() {
+        long before = System.currentTimeMillis();
+        String token = jwtUtil.generateToken("u1", "x");
+        long after = System.currentTimeMillis();
+
+        var claims = jwtUtil.parseToken(token);
+        long iatMillis = claims.getIssuedAt().getTime();
+
+        assertTrue(iatMillis >= before - 1000 && iatMillis <= after + 1000,
+            "IssuedAt " + iatMillis + " should be between " + before + " and " + after);
+    }
+
+    @Test
+    void tamperedSignatureThrows() {
+        String valid = jwtUtil.generateToken("u1", "x");
+        // 篡改token签名部分（最后一段）
+        int lastDot = valid.lastIndexOf('.');
+        String tampered = valid.substring(0, lastDot) + ".tamperedsigpart00000000000000";
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(tampered));
+    }
+
+    @Test
+    void emptyTokenThrows() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(""));
+    }
+
+    @Test
+    void differentExpirationConfigHasDifferentExpiry() {
+        // 使用更短的过期时间构造新实例
+        JwtUtil shortLived = new JwtUtil(SECRET, 1);
+        String token = shortLived.generateToken("u1", "x");
+        var claims = shortLived.parseToken(token);
+
+        long oneDayMs = 1L * 24 * 3600 * 1000;
+        long exp = claims.getExpiration().getTime();
+        long iat = claims.getIssuedAt().getTime();
+
+        long actualDelta = exp - iat;
+        // 1天过期的差值应接近1天毫秒数
+        assertTrue(Math.abs(actualDelta - oneDayMs) < 2000,
+            "Expected ~1d delta but got " + actualDelta + "ms");
+    }
 }
