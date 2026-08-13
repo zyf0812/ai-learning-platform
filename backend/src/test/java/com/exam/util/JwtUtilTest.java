@@ -39,4 +39,66 @@ class JwtUtilTest {
     void invalidTokenThrowsException() {
         assertThrows(Exception.class, () -> jwtUtil.parseToken("invalid.token.here"));
     }
+
+    @Test
+    void expiredTokenRejected() throws InterruptedException {
+        // 使用 0 天过期时间 → 立即过期
+        JwtUtil shortLived = new JwtUtil(SECRET, 0);
+        String token = shortLived.generateToken("u1", "user");
+
+        // 立即解析就应已过期（expirationMs = 0, expiration = issuedAt + 0）
+        assertThrows(Exception.class, () -> shortLived.parseToken(token));
+    }
+
+    @Test
+    void tokenTamperedSignatureRejected() {
+        String token = jwtUtil.generateToken("u1", "user");
+        // 改动末尾字符（签名部分）
+        String tampered = token.substring(0, token.length() - 4) + "XXXX";
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(tampered));
+    }
+
+    @Test
+    void emptyStringTokenRejected() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(""));
+    }
+
+    @Test
+    void nullTokenRejected() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken(null));
+    }
+
+    @Test
+    void blankTokenRejected() {
+        assertThrows(Exception.class, () -> jwtUtil.parseToken("   "));
+    }
+
+    @Test
+    void tokenHasIssuedAtInPast() {
+        long before = System.currentTimeMillis();
+        String token = jwtUtil.generateToken("u1", "user");
+        long after = System.currentTimeMillis();
+
+        var claims = jwtUtil.parseToken(token);
+        long iat = claims.getIssuedAt().getTime();
+
+        assertTrue(iat >= before - 1000); // 允许 1 秒时钟偏差
+        assertTrue(iat <= after + 1000);
+    }
+
+    @Test
+    void tokenHasCorrectExpirationWindow() {
+        int days = 7;
+        JwtUtil util = new JwtUtil(SECRET, days);
+        String token = util.generateToken("u1", "user");
+        long now = System.currentTimeMillis();
+
+        var claims = util.parseToken(token);
+        long exp = claims.getExpiration().getTime();
+        long expectedMin = now + (days - 1) * 24L * 3600 * 1000;
+        long expectedMax = now + (days + 1) * 24L * 3600 * 1000;
+
+        assertTrue(exp > expectedMin, "Expiration too early");
+        assertTrue(exp < expectedMax, "Expiration too late");
+    }
 }
