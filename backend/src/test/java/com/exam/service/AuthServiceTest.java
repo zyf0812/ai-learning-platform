@@ -41,7 +41,8 @@ class AuthServiceTest {
         when(userMapper.findByUsername("newuser")).thenReturn(null);
         doNothing().when(userMapper).insert(any(User.class));
 
-        var result = authService.register("newuser", "password123", "user");
+        // Password must meet complexity: 3+ types (uppercase + lowercase + digit here)
+        var result = authService.register("newuser", "Password123", "user");
 
         assertNotNull(result.get("token"));
         assertEquals("user", ((java.util.Map<?, ?>) result.get("user")).get("role"));
