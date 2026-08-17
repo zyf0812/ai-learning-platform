@@ -40,8 +40,8 @@ class AuthServiceTest {
     void registerNewUserReturnsToken() {
         when(userMapper.findByUsername("newuser")).thenReturn(null);
         doNothing().when(userMapper).insert(any(User.class));
-
-        var result = authService.register("newuser", "password123", "user");
+        // 大写+小写+数字+特殊字符=4种，通过强度校验与弱密码检查
+        var result = authService.register("newuser", "Str0ng!Pass", "user");
 
         assertNotNull(result.get("token"));
         assertEquals("user", ((java.util.Map<?, ?>) result.get("user")).get("role"));
