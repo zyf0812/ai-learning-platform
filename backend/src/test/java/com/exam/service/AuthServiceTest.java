@@ -41,7 +41,8 @@ class AuthServiceTest {
         when(userMapper.findByUsername("newuser")).thenReturn(null);
         doNothing().when(userMapper).insert(any(User.class));
 
-        var result = authService.register("newuser", "password123", "user");
+        // 密码必须包含至少3类字符：使用 Abc12345（小写+大写+数字 = 3种）
+        var result = authService.register("newuser", "Abc12345", "user");
 
         assertNotNull(result.get("token"));
         assertEquals("user", ((java.util.Map<?, ?>) result.get("user")).get("role"));
@@ -53,7 +54,7 @@ class AuthServiceTest {
         when(userMapper.findByUsername("existing")).thenReturn(new User());
 
         var ex = assertThrows(RuntimeException.class,
-            () -> authService.register("existing", "pass", "user"));
+            () -> authService.register("existing", "Str0ngPass!", "user"));
         assertEquals("用户名已存在", ex.getMessage());
     }
 
@@ -62,14 +63,14 @@ class AuthServiceTest {
         User user = new User();
         user.setId("u1");
         user.setUsername("testuser");
-        user.setPassword(encoder.encode("correctpass"));
+        user.setPassword(encoder.encode("C0rrect!Pass"));
         user.setRole("user");
         user.setStatus("active");
 
         when(userMapper.findByUsername("testuser")).thenReturn(user);
         when(taskQueue.getStatus("", "auth:lock:testuser")).thenReturn(null);
 
-        var result = authService.login("testuser", "correctpass");
+        var result = authService.login("testuser", "C0rrect!Pass");
 
         assertNotNull(result.get("token"));
         verify(taskQueue).del("auth:attempt:testuser");
@@ -78,7 +79,7 @@ class AuthServiceTest {
     @Test
     void loginWithWrongPasswordThrows() {
         User user = new User();
-        user.setPassword(encoder.encode("correctpass"));
+        user.setPassword(encoder.encode("C0rrect!Pass"));
 
         when(userMapper.findByUsername("testuser")).thenReturn(user);
         when(taskQueue.getStatus("", "auth:lock:testuser")).thenReturn(null);
