@@ -97,6 +97,12 @@ public class AuthService {
     private String checkPasswordStrength(String password) {
         if (password.length() < 8) return "密码长度至少8位";
 
+        // 常见弱密码检查：优先于字符种类提示，避免误导用户（例如"12345678"应提示"过于简单"而非"需要字母数字"）
+        String[] weak = {"12345678", "123456789", "password", "qwerty123", "abc123456", "88888888", "11111111"};
+        for (String w : weak) {
+            if (password.equalsIgnoreCase(w)) return "密码过于简单，请换一个";
+        }
+
         boolean hasUpper = false, hasLower = false, hasDigit = false, hasSpecial = false;
         for (char c : password.toCharArray()) {
             if (c >= 'A' && c <= 'Z') hasUpper = true;
@@ -113,12 +119,6 @@ public class AuthService {
 
         if (kinds < 2) return "密码需包含字母和数字";
         if (kinds < 3) return "建议密码包含大写字母、小写字母、数字和特殊字符中的至少3种";
-
-        // 常见弱密码
-        String[] weak = {"12345678", "123456789", "password", "qwerty123", "abc123456", "88888888", "11111111"};
-        for (String w : weak) {
-            if (password.equalsIgnoreCase(w)) return "密码过于简单，请换一个";
-        }
 
         return null; // 通过
     }
