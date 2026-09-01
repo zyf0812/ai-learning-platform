@@ -41,7 +41,8 @@ class AuthServiceTest {
         when(userMapper.findByUsername("newuser")).thenReturn(null);
         doNothing().when(userMapper).insert(any(User.class));
 
-        var result = authService.register("newuser", "password123", "user");
+        // 密码必须满足强度：>= 8 位 + 至少 3 种字符类型
+        var result = authService.register("newuser", "Pass@1234", "user");
 
         assertNotNull(result.get("token"));
         assertEquals("user", ((java.util.Map<?, ?>) result.get("user")).get("role"));
@@ -53,7 +54,7 @@ class AuthServiceTest {
         when(userMapper.findByUsername("existing")).thenReturn(new User());
 
         var ex = assertThrows(RuntimeException.class,
-            () -> authService.register("existing", "pass", "user"));
+            () -> authService.register("existing", "Strong@123", "user"));
         assertEquals("用户名已存在", ex.getMessage());
     }
 
