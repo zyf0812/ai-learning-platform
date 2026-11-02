@@ -2,17 +2,20 @@ package com.exam.controller;
 
 import com.exam.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,6 +33,23 @@ class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
+    @MockBean
+    private CaptchaController captchaController;
+
+    @BeforeEach
+    void acceptCaptchaByDefault() {
+        when(captchaController.verify(anyString(), anyString())).thenReturn(true);
+    }
+
+    private Map<String, String> registerBody(String username, String password) {
+        return Map.of(
+            "username", username,
+            "password", password,
+            "captchaToken", "captcha-token",
+            "captchaCode", "ABCD"
+        );
+    }
+
     @Test
     void registerReturnsToken() throws Exception {
         when(authService.register("newuser", "pass123", "user"))
@@ -37,9 +57,22 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("username", "newuser", "password", "pass123"))))
+                .content(objectMapper.writeValueAsString(registerBody("newuser", "pass123"))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.token").value("mock-jwt-token"));
+    }
+
+    @Test
+    void registerWithInvalidCaptchaReturns400AndSkipsService() throws Exception {
+        when(captchaController.verify(anyString(), anyString())).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerBody("newuser", "pass123"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("验证码错误或已过期"));
+
+        verify(authService, never()).register(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -49,7 +82,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("username", "dupuser", "password", "pass123"))))
+                .content(objectMapper.writeValueAsString(registerBody("dupuser", "pass123"))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("用户名已存在"));
     }
