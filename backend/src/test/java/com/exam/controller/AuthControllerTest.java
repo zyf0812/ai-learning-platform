@@ -2,6 +2,7 @@ package com.exam.controller;
 
 import com.exam.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,6 +31,15 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    /** 验证码依赖 Redis，测试中替换为固定通过，保证用例隔离，不依赖外部服务 */
+    @MockBean
+    private CaptchaController captchaController;
+
+    @BeforeEach
+    void setUpCaptcha() {
+        when(captchaController.verify(nullable(String.class), nullable(String.class))).thenReturn(true);
+    }
 
     @Test
     void registerReturnsToken() throws Exception {
