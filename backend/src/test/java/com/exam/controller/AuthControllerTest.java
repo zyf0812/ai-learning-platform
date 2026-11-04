@@ -13,11 +13,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "app.jwt.secret=test-secret-key-that-is-long-enough-for-hmac-sha-256!!",
+    "app.deepseek.api-key=test",
+    "app.zhipu.api-key=test"
+})
 @AutoConfigureMockMvc
 class AuthControllerTest {
 
@@ -30,28 +36,67 @@ class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
+    @MockBean
+    private CaptchaController captchaController;
+
     @Test
     void registerReturnsToken() throws Exception {
+        when(captchaController.verify("captcha-token", "abcd")).thenReturn(true);
         when(authService.register("newuser", "pass123", "user"))
             .thenReturn(Map.of("token", "mock-jwt-token", "user", Map.of("role", "user")));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("username", "newuser", "password", "pass123"))))
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "username", "newuser", "password", "pass123",
+                    "captchaToken", "captcha-token", "captchaCode", "abcd"))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.token").value("mock-jwt-token"));
     }
 
     @Test
     void registerDuplicateReturns400() throws Exception {
+        when(captchaController.verify("captcha-token", "abcd")).thenReturn(true);
         when(authService.register("dupuser", "pass123", "user"))
             .thenThrow(new RuntimeException("用户名已存在"));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(Map.of("username", "dupuser", "password", "pass123"))))
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "username", "dupuser", "password", "pass123",
+                    "captchaToken", "captcha-token", "captchaCode", "abcd"))))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("用户名已存在"));
+    }
+
+    @Test
+    void registerWithInvalidCaptchaReturns400WithoutCreatingUser() throws Exception {
+        when(captchaController.verify("captcha-token", "wrong")).thenReturn(false);
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "username", "newuser", "password", "pass123",
+                    "captchaToken", "captcha-token", "captchaCode", "wrong"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("验证码错误或已过期"));
+
+        verify(authService, never()).register(anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void registerAdminApplicationBypassesTokenAndReturnsPendingMessage() throws Exception {
+        when(captchaController.verify("captcha-token", "abcd")).thenReturn(true);
+        when(authService.register("root", "pass123", "admin"))
+            .thenReturn(Map.of("message", "管理员申请已提交，请等待 root 审批"));
+
+        mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of(
+                    "username", "root", "password", "pass123", "role", "admin",
+                    "captchaToken", "captcha-token", "captchaCode", "abcd"))))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.message").value("管理员申请已提交，请等待 root 审批"));
     }
 
     @Test
