@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,8 +31,12 @@ class AuthControllerTest {
     @MockBean
     private AuthService authService;
 
+    @MockBean
+    private CaptchaController captchaController;
+
     @Test
     void registerReturnsToken() throws Exception {
+        when(captchaController.verify(any(), any())).thenReturn(true);
         when(authService.register("newuser", "pass123", "user"))
             .thenReturn(Map.of("token", "mock-jwt-token", "user", Map.of("role", "user")));
 
@@ -44,6 +49,7 @@ class AuthControllerTest {
 
     @Test
     void registerDuplicateReturns400() throws Exception {
+        when(captchaController.verify(any(), any())).thenReturn(true);
         when(authService.register("dupuser", "pass123", "user"))
             .thenThrow(new RuntimeException("用户名已存在"));
 
